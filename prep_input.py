@@ -55,9 +55,9 @@ def prep_data(input_file_name):
 
     print("Input File: " + str(input_file_name) + ".xyz")
 
-    (atom_types, atom_positions) = read_xyz_file("input_files/" + str(input_file_name) + ".xyz")
+    (atom_types, atom_positions) = read_xyz_file(str(input_file_name))
 
-    (region_list, interaction_distances) = read_transport_file("input_files/" + "transport")
+    (region_list, interaction_distances) = read_transport_file()
 
     num_atoms = len(atom_positions)
 

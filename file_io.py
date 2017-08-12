@@ -21,8 +21,8 @@ def read_xyz_file(input_file_name):
     Reads File "input_file_name".xyz, and returns two lists,
     specifying Atom types and Atom positions, respectively.
     """
-
-    file = open(input_file_name, 'r')
+    input_file_path = "./" + INPUT_FOLDER_NAME + "/" + input_file_name + ".xyz"
+    file = open(input_file_path, 'r')
     max_file_lines = 1000
 
     num_atoms = int(file.readline())
@@ -64,7 +64,7 @@ def read_xyz_file(input_file_name):
 # -----------------------------------------------------------------------------
 
 
-def read_transport_file(input_file_name):
+def read_transport_file():
     """
     Reads File "input_file_name".dat, and returns lists containing the atom
     indices of the device atoms, as well as the atom indices of
@@ -72,7 +72,8 @@ def read_transport_file(input_file_name):
     which spcifies the maximum interaction distance between each type of atom.
     """
 
-    file = open(input_file_name + ".dat", 'r')
+    transport_file_path = "./" + INPUT_FOLDER_NAME + "/" + "transport.dat"
+    file = open(transport_file_path, 'r')
     max_file_lines = 1000
 
     iterations = 0
