@@ -15,6 +15,7 @@ INPUT_FILE_NAME = "1d_kette"
 
 
 def main():
+
     """
     Entry Point for Program
     """
@@ -55,8 +56,8 @@ def main():
                         contact_edge_list.append(index_contact)
         contact_edge_matrix.append(contact_edge_list)
 
-    print_matrix(dist_matrix)
-    print(interaction_matrix)
+    # print_matrix(dist_matrix)
+    print_matrix(interaction_matrix)
     print(contact_edge_matrix)
 
     """

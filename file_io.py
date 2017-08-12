@@ -79,30 +79,31 @@ def read_transport_file(input_file_name):
     region_list = []  # List of regions, starting with device region
 
     line = file.readline()
-    stripped_line = line.replace(" ", "").replace("\n", "")
     entries = line.split()
+    
 
     iterations = 0
-    while stripped_line != ''             \
-        and iterations < max_file_lines   \
-        and ("Device" in entries[0] or "Contact" in entries[0]):
+    while iterations < max_file_lines:
 
         region_list.append(tuple(range(int(entries[1]) - 1, int(entries[2]))))
+
         line = file.readline()
-        stripped_line = line.replace(" ", "").replace("\n", "")
         entries = line.split()
         iterations += 1
+        
+        if not("Device" in entries[0] or "Contact" in entries[0]):
+            break
 
     interaction_distances = {}
 
-    line = file.readline()
-    stripped_line = line.replace(" ", "").replace("\n", "")
-    entries = line.split()
+    #line = file.readline()
+    #stripped_line = line.replace(" ", "").replace("\n", "")
+    #entries = line.split()
 
     # loop terminates at first empty line, or at end of file
     # (since readline() returns empty string at end of file)
     iterations = 0
-    while stripped_line != '' and iterations < max_file_lines:
+    while iterations < max_file_lines:
         key = entries[0] + entries[1]
         interaction_distances[key] = float(entries[2])
 
@@ -110,6 +111,9 @@ def read_transport_file(input_file_name):
         entries = line.split()
         iterations += 1
         stripped_line = line.replace(" ", "").replace("\n", "")
+        
+        if stripped_line == '':
+            break
 
     return (region_list, interaction_distances)
 

@@ -26,7 +26,9 @@ def is_within_interaction_distance(index1, index2, atom_types,
         interaction_key = str(atom_types[index2]) + str(atom_types[index1])
         inter_dist = interaction_distances.get(interaction_key, -1.0)
 
-    # print(dist_matrix[index1][index2])
+    if(index1 == index2):
+        print(interaction_key)
+        print(inter_dist)
 
     return bool(dist_matrix[index1][index2] < inter_dist)
 
@@ -60,7 +62,9 @@ def prep_data(input_file_name):
     (atom_types, atom_positions) = read_xyz_file("input_files/" + str(input_file_name) + ".xyz")
 
     (region_list, interaction_distances) = read_transport_file("input_files/" + "transport")
-
+    
+    print(interaction_distances)
+    
     num_atoms = len(atom_positions)
 
     dist_matrix = []
