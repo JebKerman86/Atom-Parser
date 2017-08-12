@@ -3,11 +3,15 @@
 Einlesen von .XYZ Dateien
 """
 
-
+import numpy as np
 import json
 import os
 from pathlib import Path
 
+
+CACHED_DATA_FOLDER_NAME = "cached_data"
+INPUT_FOLDER_NAME = "input_files"
+OUTPUT_FOLDER_NAME = "output_files"
 
 # -----------------------------------------------------------------------------
 
@@ -121,13 +125,23 @@ def read_transport_file(input_file_name):
 # -----------------------------------------------------------------------------
 
 
-def chache_data(input_file_name, data):
+def chache_data(input_file, data):
     """
     Caches matrices from function PrepInput() to lower execution time when
     program called repeatedly with the same input files.
+    Converts Numpy arrays to lists.
     """
-    with open("./cached_data/" + input_file_name + ".json", 'w') as outfile:
-        json.dump(data, outfile)
+    jsonified_data = {}
+    for key, array in data.items():
+        converted_array = array
+        if(str(type(array)) == "<class 'numpy.ndarray'>"):
+            converted_array = array.tolist()
+        jsonified_data[key] = converted_array
+
+    input_file_name = input_file + ".json"
+    file_path = "./" + CACHED_DATA_FOLDER_NAME + "/" + input_file_name
+    with open(file_path, 'w') as outfile:
+        json.dump(jsonified_data, outfile)
 
 
 # -----------------------------------------------------------------------------
@@ -135,11 +149,25 @@ def chache_data(input_file_name, data):
 
 def load_data(input_file_name):
     """
-    Loads cached data for reuse.
+    Loads cached data for reuse. Converts Lists to numpy arrays.
     """
+
+    jsonified_data = {}
+    data = {}
     file_name = input_file_name + ".json"
-    my_file = Path(file_name)
+    file_path = "./" + CACHED_DATA_FOLDER_NAME + "/" + file_name
+    my_file = Path(file_path)
+
     if my_file.is_file():
-        with open("./cached_data/" + str(file_name), 'r') as file:
-            return json.load(file)
+
+        with open(str(file_path), 'r') as file:
+            jsonified_data = json.load(file)
+
+            for key, array in jsonified_data.items():
+                converted_array = np.array(array)
+                data[key] = converted_array
+
+            return data
+    
+    print("No File Found")
     return "No File Found"

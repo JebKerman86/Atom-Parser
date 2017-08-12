@@ -4,7 +4,7 @@ Created on Mon Aug  7 14:38:06 2017
 
 @author: Benjamin
 """
-import numpy
+import numpy as np
 
 from file_io import read_xyz_file, read_transport_file
 from utilities import vec3_dist, order_index_list
@@ -58,9 +58,7 @@ def prep_data(input_file_name):
     (atom_types, atom_positions) = read_xyz_file("input_files/" + str(input_file_name) + ".xyz")
 
     (region_list, interaction_distances) = read_transport_file("input_files/" + "transport")
-    
-    print(interaction_distances)
-    
+
     num_atoms = len(atom_positions)
 
     dist_matrix = []
@@ -117,11 +115,11 @@ def prep_data(input_file_name):
         print(ordered_dist_matrix[i])
     """
 
-    data = {"region_list"                :  region_list,
-            "dist_matrix"                :  dist_matrix,
-            "interaction_matrix"         :  interaction_matrix,
-            "ordered_index_matrix"       :  ordered_index_matrix,
-            "ordered_dist_matrix"        :  ordered_dist_matrix,
-            "ordered_interaction_matrix" :  ordered_interaction_matrix}
+    data = {"region_list"                :  np.array(region_list),
+            "dist_matrix"                :  np.array(dist_matrix),
+            "interaction_matrix"         :  np.array(interaction_matrix),
+            "ordered_index_matrix"       :  np.array(ordered_index_matrix),
+            "ordered_dist_matrix"        :  np.array(ordered_dist_matrix),
+            "ordered_interaction_matrix" :  np.array(ordered_interaction_matrix)}
 
     return data
