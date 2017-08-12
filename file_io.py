@@ -5,6 +5,7 @@ Einlesen von .XYZ Dateien
 
 
 import json
+import os
 from pathlib import Path
 
 
@@ -121,7 +122,7 @@ def chache_data(input_file_name, data):
     Caches matrices from function PrepInput() to lower execution time when
     program called repeatedly with the same input files.
     """
-    with open("CachedData--" + input_file_name + ".json", 'w') as outfile:
+    with open("./cached_data/" + input_file_name + ".json", 'w') as outfile:
         json.dump(data, outfile)
 
 
@@ -132,9 +133,9 @@ def load_data(input_file_name):
     """
     Loads cached data for reuse.
     """
-    file_name = "CachedData--" + input_file_name + ".json"
+    file_name = input_file_name + ".json"
     my_file = Path(file_name)
     if my_file.is_file():
-        with open(file_name, 'r') as file:
+        with open("./cached_data/" + str(file_name), 'r') as file:
             return json.load(file)
     return "No File Found"

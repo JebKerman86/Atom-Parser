@@ -1,3 +1,22 @@
+# My Settings
+
+# For spyder:
+/.spyproject/*
+
+#Input and output files:
+/input_files/*
+/output_files/*
+/cached_data/*
+
+# Pylint:
+pylintrc
+
+
+
+
+
+
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
