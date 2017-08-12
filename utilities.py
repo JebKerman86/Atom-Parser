@@ -24,6 +24,22 @@ def print_list(input_list):
 # -----------------------------------------------------------------------------
 
 
+def print_matrix(input_matrix):
+    """
+    Prints a matrix! (duh)
+    """
+    print("--------------------------------------------------------")
+    for line in input_matrix:
+        print_line = ""
+        for number in line:
+            print_line = print_line + "{:7.4f}".format(number) + "  |  "
+        print(print_line)
+    print("--------------------------------------------------------")
+
+
+# -----------------------------------------------------------------------------
+
+
 def vec3_dist(vec1, vec2):
     """
     Returns distance between Vectors (list of numbers) vec1 and vec2

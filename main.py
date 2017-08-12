@@ -7,6 +7,7 @@ Created on Tue Aug  8 16:35:15 2017
 
 from prep_input import prep_data
 from file_io import chache_data, load_data
+from utilities import print_matrix
 
 
 LOAD_CACHE_DATA = False
@@ -54,7 +55,7 @@ def main():
                         contact_edge_list.append(index_contact)
         contact_edge_matrix.append(contact_edge_list)
 
-    print(dist_matrix)
+    print_matrix(dist_matrix)
     print(interaction_matrix)
     print(contact_edge_matrix)
 
