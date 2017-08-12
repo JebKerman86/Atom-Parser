@@ -7,7 +7,7 @@ Created on Mon Aug  7 14:38:06 2017
 import numpy as np
 
 from file_io import read_xyz_file, read_transport_file
-from utilities import vec3_dist, order_index_list
+from utilities import vec3_dist, order_index_list, print_matrix, np_order
 
 
 # -----------------------------------------------------------------------------
@@ -62,37 +62,66 @@ def prep_data(input_file_name):
     num_atoms = len(atom_positions)
 
     dist_matrix = []
+    np_dist_matrix = np.zeros((num_atoms,num_atoms))
+    
 
-    for i in range(0, num_atoms):
+    for idx1 in range(0, num_atoms):
         dist_matrix.append([])
-        for j in range(0, num_atoms):
-            dist_matrix[i].append(vec3_dist(atom_positions[i],
-                                            atom_positions[j]))
+        for idx2 in range(0, num_atoms):
+            np_dist_matrix[idx1,idx2] = vec3_dist(atom_positions[idx1],
+                                            atom_positions[idx2])
+            dist_matrix[idx1].append(vec3_dist(atom_positions[idx1],
+                                            atom_positions[idx2]))
+
+#    print(np_dist_matrix)
+#    print_matrix(dist_matrix)
 
     interaction_matrix = []
+    np_interaction_matrix = np.zeros((num_atoms,num_atoms))
 
-    for i in range(num_atoms):
+    for idx1 in range(num_atoms):
         interaction_list = []
-        for j in range(num_atoms):
-            interaction_list.append(
-                is_within_interaction_distance(
-                    i, j, atom_types, interaction_distances, dist_matrix))
+        for idx2 in range(num_atoms):
+            is_interacting = is_within_interaction_distance(
+                    idx1, idx2, atom_types, interaction_distances, dist_matrix)
+            np_interaction_matrix[idx1,idx2] = is_interacting
+            interaction_list.append(is_interacting)
         interaction_matrix.append(interaction_list)
+
+    # print(interaction_matrix)
+    # print(np_interaction_matrix)
 
     ordered_index_matrix = []
     ordered_dist_matrix = []
     ordered_interaction_matrix = []
+    
+    np_ordered_index_matrix = np.zeros((num_atoms,num_atoms))
+    np_ordered_dist_matrix = np.zeros((num_atoms,num_atoms))
+    np_ordered_interaction_matrix = np.zeros((num_atoms,num_atoms))
 
     # ordered_index_matrix:
     # Each row gives a list of atoms by their index, order by increasing
     # distance the column index for each row corresponds to the one atom
     # relative to which all the distances in a row are measured
+    
+    np_ordered_index_matrix = np.argsort(np_dist_matrix, axis = 1)
+    
+    np_ordered_dist_matrix = np.sort(np_dist_matrix, axis = 1)
+    
+    # np_ordered_interaction_matrix = np_ordered_dist_matrix[]
+    """
+    np_dist_list = np.array(num_atoms)
+    for fixed_idx in range(num_atoms):
+        np_dist_list = np_dist_matrix[fixed_atom_index,:]
+        np_ordered_index_list = np.argsort(np_dist_list)
+    """
+        
 
-    print("---------------------------------------------------------------")
     for fixed_atom_index in range(num_atoms):
         dist_list = dist_matrix[fixed_atom_index][:]
-        ordered_index_list = order_index_list(dist_list)
 
+        ordered_index_list = order_index_list(dist_list)
+        
         ordered_dist_list = []
         for indices in ordered_index_list:
             ordered_dist_list.append(dist_list[indices])
@@ -106,6 +135,7 @@ def prep_data(input_file_name):
         ordered_index_matrix.append(ordered_index_list)
         ordered_dist_matrix.append(ordered_dist_list)
         ordered_interaction_matrix.append(ordered_interaction_list)
+
 
     """
     print(atom_types)
