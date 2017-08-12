@@ -4,7 +4,7 @@ Created on Mon Aug  7 14:38:06 2017
 
 @author: Benjamin
 """
-
+import numpy
 
 from file_io import read_xyz_file, read_transport_file
 from utilities import vec3_dist, order_index_list
@@ -25,10 +25,6 @@ def is_within_interaction_distance(index1, index2, atom_types,
     if inter_dist == -1:
         interaction_key = str(atom_types[index2]) + str(atom_types[index1])
         inter_dist = interaction_distances.get(interaction_key, -1.0)
-
-    if(index1 == index2):
-        print(interaction_key)
-        print(inter_dist)
 
     return bool(dist_matrix[index1][index2] < inter_dist)
 
