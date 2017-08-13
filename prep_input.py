@@ -13,6 +13,7 @@ from utilities import vec3_dist, order_index_list, print_matrix, np_order
 
 # -----------------------------------------------------------------------------
 
+#Vectorize this function ???
 def is_within_interaction_distance(index1, index2, atom_types,
                                    interaction_distances, dist_matrix):
     """
@@ -29,12 +30,8 @@ def is_within_interaction_distance(index1, index2, atom_types,
     return bool(dist_matrix[index1,index2] < inter_dist)
 
 
-
 # -----------------------------------------------------------------------------
 
-
-# Nmpy arrays verwenden!!
-# variablen i, j länger machen (zB ii, jj)
 
 def prep_data(input_file_name):
     """
@@ -68,28 +65,19 @@ def prep_data(input_file_name):
     
 
     for idx1 in range(0, num_atoms):
-        #dist_matrix.append([])
         for idx2 in range(0, num_atoms):
             #print("ixd1 = " + str(idx1) + " / " + "idx2 = " + str(idx2))
             dist = np_atom_positions[idx2] - np_atom_positions[idx1]
             #print(dist)
             np_dist_matrix[idx1,idx2] = LA.norm(dist)
-            #dist_matrix[idx1].append(vec3_dist(atom_positions[idx1],
-            #                                atom_positions[idx2]))
 
-#    print(np_dist_matrix)
-
-    #interaction_matrix = []
     np_interaction_matrix = np.zeros((num_atoms,num_atoms))
 
     for idx1 in range(num_atoms):
-        #interaction_list = []
         for idx2 in range(num_atoms):
             is_interacting = is_within_interaction_distance(
                     idx1, idx2, atom_types, interaction_distances, np_dist_matrix)
             np_interaction_matrix[idx1,idx2] = is_interacting
-            #interaction_list.append(is_interacting)
-        #interaction_matrix.append(interaction_list)
 
     # ordered_index_matrix:
     # Each row gives a list of atoms by their index, order by increasing
