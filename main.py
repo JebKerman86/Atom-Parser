@@ -41,9 +41,9 @@ def main():
     device   = region_list[0]
     contact1 = region_list[1]  # contacts must start at index "1"
     contact2 = region_list[2]
-    print(device)
-    print(contact1)
-    print(contact2)
+    #print(device)
+    #print(contact1)
+    #print(contact2)
     # Each row contains the indices of atoms in a contact
     # that interact with device atoms.
     contact_edge_matrix = []
