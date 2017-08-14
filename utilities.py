@@ -112,3 +112,18 @@ def order_index_list(input_list):
             result.append(elem)
 
     return result
+
+
+
+
+
+def np_order(input):
+    return input
+
+
+
+
+
+
+
+

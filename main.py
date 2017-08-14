@@ -5,12 +5,16 @@ Created on Tue Aug  8 16:35:15 2017
 @author: Benjamin
 """
 
+
+import numpy as np
+
 from prep_input import prep_data
 from file_io import chache_data, load_data
 from utilities import print_matrix
 
 
 LOAD_CACHE_DATA = False
+# Name without file ending:
 INPUT_FILE_NAME = "1d_kette"
 
 
@@ -37,13 +41,13 @@ def main():
     device   = region_list[0]
     contact1 = region_list[1]  # contacts must start at index "1"
     contact2 = region_list[2]
-    print(device)
-    print(contact1)
-    print(contact2)
+    #print(device)
+    #print(contact1)
+    #print(contact2)
     # Each row contains the indices of atoms in a contact
     # that interact with device atoms.
     contact_edge_matrix = []
-
+    """
     for contact in region_list[1:]:
         # print("contact: " + str(contact))
         contact_edge_list = []
@@ -59,6 +63,7 @@ def main():
     # print_matrix(dist_matrix)
     print_matrix(interaction_matrix)
     print(contact_edge_matrix)
+    """
 
     """
     ToDo: use NumPy instead of lists

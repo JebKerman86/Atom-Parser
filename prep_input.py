@@ -4,15 +4,16 @@ Created on Mon Aug  7 14:38:06 2017
 
 @author: Benjamin
 """
-import numpy
+import numpy as np
+from numpy import linalg as LA
 
 from file_io import read_xyz_file, read_transport_file
-from utilities import vec3_dist, order_index_list
+from utilities import vec3_dist, order_index_list, print_matrix, np_order
 
 
 # -----------------------------------------------------------------------------
 
-
+#Vectorize this function ???
 def is_within_interaction_distance(index1, index2, atom_types,
                                    interaction_distances, dist_matrix):
     """
@@ -26,14 +27,11 @@ def is_within_interaction_distance(index1, index2, atom_types,
         interaction_key = str(atom_types[index2]) + str(atom_types[index1])
         inter_dist = interaction_distances.get(interaction_key, -1.0)
 
-    return bool(dist_matrix[index1][index2] < inter_dist)
+    return bool(dist_matrix[index1,index2] < inter_dist)
 
 
 # -----------------------------------------------------------------------------
 
-
-# Nmpy arrays verwenden!!
-# variablen i, j länger machen (zB ii, jj)
 
 def prep_data(input_file_name):
     """
@@ -55,73 +53,72 @@ def prep_data(input_file_name):
 
     print("Input File: " + str(input_file_name) + ".xyz")
 
-    (atom_types, atom_positions) = read_xyz_file("input_files/" + str(input_file_name) + ".xyz")
+    (atom_types, atom_positions) = read_xyz_file(str(input_file_name))
 
-    (region_list, interaction_distances) = read_transport_file("input_files/" + "transport")
-    
-    print(interaction_distances)
+    (region_list, interaction_distances) = read_transport_file()
     
     num_atoms = len(atom_positions)
+    np_atom_positions = np.array(atom_positions)
 
-    dist_matrix = []
+    #dist_matrix = []
+    np_dist_matrix = np.zeros((num_atoms,num_atoms))
+    
 
-    for i in range(0, num_atoms):
-        dist_matrix.append([])
-        for j in range(0, num_atoms):
-            dist_matrix[i].append(vec3_dist(atom_positions[i],
-                                            atom_positions[j]))
+    for idx1 in range(0, num_atoms):
+        for idx2 in range(0, num_atoms):
+            #print("ixd1 = " + str(idx1) + " / " + "idx2 = " + str(idx2))
+            dist = np_atom_positions[idx2] - np_atom_positions[idx1]
+            #print(dist)
+            np_dist_matrix[idx1,idx2] = LA.norm(dist)
 
-    interaction_matrix = []
+    np_interaction_matrix = np.zeros((num_atoms,num_atoms))
 
-    for i in range(num_atoms):
-        interaction_list = []
-        for j in range(num_atoms):
-            interaction_list.append(
-                is_within_interaction_distance(
-                    i, j, atom_types, interaction_distances, dist_matrix))
-        interaction_matrix.append(interaction_list)
-
-    ordered_index_matrix = []
-    ordered_dist_matrix = []
-    ordered_interaction_matrix = []
+    for idx1 in range(num_atoms):
+        for idx2 in range(num_atoms):
+            is_interacting = is_within_interaction_distance(
+                    idx1, idx2, atom_types, interaction_distances, np_dist_matrix)
+            np_interaction_matrix[idx1,idx2] = is_interacting
 
     # ordered_index_matrix:
     # Each row gives a list of atoms by their index, order by increasing
     # distance the column index for each row corresponds to the one atom
     # relative to which all the distances in a row are measured
+    
+    np_ordered_index_matrix = np.zeros((num_atoms,num_atoms))
+    np_ordered_dist_matrix = np.zeros((num_atoms,num_atoms))
+    np_ordered_interaction_matrix = np.zeros((num_atoms,num_atoms))
 
-    print("---------------------------------------------------------------")
-    for fixed_atom_index in range(num_atoms):
-        dist_list = dist_matrix[fixed_atom_index][:]
-        ordered_index_list = order_index_list(dist_list)
+    np_ordered_index_matrix = np.argsort(np_dist_matrix, axis = 1)
+    np_ordered_dist_matrix = np.sort(np_dist_matrix, axis = 1)
+    
+    for idx1 in range(0, num_atoms):
+        #print("---------------------------------------------------------")
+        #print(np_ordered_index_matrix[idx1,:])
+        #print("---------------------------------------------------------")
+        for idx2, elem in enumerate(np_ordered_index_matrix[idx1,:]):
+            #print("ixd1 = " + str(idx1) + " / " + "idx2 = " + str(idx2))
+            is_interacting =  \
+                is_within_interaction_distance(
+                    idx1, elem, atom_types,
+                    interaction_distances, np_dist_matrix)
+            np_ordered_interaction_matrix[idx1, idx2] = is_interacting
+            #print(is_interacting)
+            #print(np_ordered_interaction_matrix)
 
-        ordered_dist_list = []
-        for indices in ordered_index_list:
-            ordered_dist_list.append(dist_list[indices])
 
-        ordered_interaction_list = []
-        for elem in ordered_index_list:
-            ordered_interaction_list.append(is_within_interaction_distance(
-                fixed_atom_index, elem, atom_types,
-                interaction_distances, dist_matrix))
 
-        ordered_index_matrix.append(ordered_index_list)
-        ordered_dist_matrix.append(ordered_dist_list)
-        ordered_interaction_matrix.append(ordered_interaction_list)
+    #print(np.array(ordered_index_matrix) - np_ordered_index_matrix)
+    #print(np.array(ordered_dist_matrix) - np_ordered_dist_matrix)
 
-    """
-    print(atom_types)
+    print("np_ordered_interaction_matrix")
+    print(np_ordered_interaction_matrix)
 
-    for i in range(num_atoms):
-        print(ordered_index_matrix[i])
-        print(ordered_dist_matrix[i])
-    """
 
     data = {"region_list"                :  region_list,
-            "dist_matrix"                :  dist_matrix,
-            "interaction_matrix"         :  interaction_matrix,
-            "ordered_index_matrix"       :  ordered_index_matrix,
-            "ordered_dist_matrix"        :  ordered_dist_matrix,
-            "ordered_interaction_matrix" :  ordered_interaction_matrix}
+            "dist_matrix"                :  np_dist_matrix,
+            "interaction_matrix"         :  np_interaction_matrix,
+            "ordered_index_matrix"       :  np_ordered_index_matrix,
+            "ordered_dist_matrix"        :  np_ordered_dist_matrix,
+            "ordered_interaction_matrix" :  np_ordered_interaction_matrix}
 
     return data
