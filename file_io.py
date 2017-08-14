@@ -90,7 +90,8 @@ def read_transport_file():
     iterations = 0
     while iterations < max_file_lines:
 
-        region_list.append(tuple(range(int(entries[1]) - 1, int(entries[2]))))
+        region = list(range(int(entries[1]) - 1, int(entries[2])))
+        region_list.append(region)
 
         line = file.readline()
         entries = line.split()

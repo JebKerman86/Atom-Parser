@@ -67,7 +67,7 @@ def prep_data(input_file_name):
             # print(dist)
             dist_mtrx[idx1, idx2] = LA.norm(dist)
 
-    interact_mtrx = np.zeros((num_atoms, num_atoms))
+    interact_mtrx = np.empty((num_atoms, num_atoms), dtype=bool)
     for idx1 in range(num_atoms):
         for idx2 in range(num_atoms):
             is_interacting = is_within_interaction_distance(
