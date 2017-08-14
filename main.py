@@ -12,7 +12,6 @@ from prep_input import prep_data
 from file_io import chache_data, load_data
 from utilities import print_matrix
 
-
 LOAD_CACHE_DATA = False
 # Name without file ending:
 INPUT_FILE_NAME = "1d_kette"
@@ -30,15 +29,15 @@ def main():
         data = prep_data(INPUT_FILE_NAME)
         chache_data(INPUT_FILE_NAME, data)
 
-    dist_matrix                = data["dist_matrix"]
-    interaction_matrix         = data["interaction_matrix"]
-    ordered_index_matrix       = data["ordered_index_matrix"]
-    ordered_dist_matrix        = data["ordered_dist_matrix"]
-    ordered_interaction_matrix = data["ordered_interaction_matrix"]
+    dist_matrix = data["dist_mtrx"]
+    interaction_matrix = data["interact_mtrx"]
+    ordered_index_matrix = data["ordered_idx_mtrx"]
+    ordered_dist_matrix = data["ordered_dist_mtrx"]
+    ordered_interaction_matrix = data["ordered_interact_mtrx"]
 
-    region_list   = data["region_list"]
+    region_list = data["region_list"]
 
-    device   = region_list[0]
+    device = region_list[0]
     contact1 = region_list[1]  # contacts must start at index "1"
     contact2 = region_list[2]
     #print(device)
