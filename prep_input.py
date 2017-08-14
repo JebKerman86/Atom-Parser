@@ -100,9 +100,6 @@ def prep_data(input_file_name):
             # print(is_interacting)
             # print(ordered_interact_mtrx)
 
-    print("ordered_interact_mtrx")
-    print(ordered_interact_mtrx)
-
     data = {"region_list": region_list,
             "dist_mtrx": dist_mtrx,
             "interact_mtrx": interact_mtrx,
