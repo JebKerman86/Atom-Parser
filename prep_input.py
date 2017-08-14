@@ -32,7 +32,7 @@ def is_within_interaction_distance(index1, index2, atom_types,
 # -----------------------------------------------------------------------------
 
 
-def prep_data(input_file_name):
+def prep_data(atom_types, atom_positions, region_list, interaction_distances):
     """
     Determine the following (N x N) Matrices ( 0 <= n, m < N, N = numAtoms ):
     <*> dist_mtrx          ------- Distance between atom n and atom m
@@ -49,12 +49,6 @@ def prep_data(input_file_name):
                                     to "True" if distance is lower than the
                                     interaction distance for that pair of atoms
     """
-
-    print("Input File: " + str(input_file_name) + ".xyz")
-
-    # The loaded data are NOT numpy arrays (change later?)
-    (atom_types, atom_positions) = read_xyz_file(str(input_file_name))
-    (region_list, interaction_distances) = read_transport_file()
 
     num_atoms = len(atom_positions)
     atom_positions = np.array(atom_positions)
@@ -100,11 +94,10 @@ def prep_data(input_file_name):
             # print(is_interacting)
             # print(ordered_interact_mtrx)
 
-    data = {"region_list": region_list,
-            "dist_mtrx": dist_mtrx,
-            "interact_mtrx": interact_mtrx,
-            "ordered_idx_mtrx": ordered_idx_mtrx,
-            "ordered_dist_mtrx": ordered_dist_mtrx,
-            "ordered_interact_mtrx": ordered_interact_mtrx}
+    data =  {"dist_mtrx": dist_mtrx,
+             "interact_mtrx": interact_mtrx,
+             "ordered_idx_mtrx": ordered_idx_mtrx,
+             "ordered_dist_mtrx": ordered_dist_mtrx,
+             "ordered_interact_mtrx": ordered_interact_mtrx}
 
     return data

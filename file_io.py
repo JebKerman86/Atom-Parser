@@ -126,7 +126,7 @@ def read_transport_file():
 # -----------------------------------------------------------------------------
 
 
-def write_bins(bin_generations, file_name):
+def write_bins(bin_generations, atom_positions, file_name):
     file_name = file_name + ".jmol"
     file_path = "./" + OUTPUT_FOLDER_NAME + "/" + file_name
     outfile = open(file_path, 'w')

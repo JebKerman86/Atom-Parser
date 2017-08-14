@@ -8,7 +8,7 @@ Created on Tue Aug  8 16:35:15 2017
 import numpy as np
 
 from prep_input import prep_data
-from file_io import chache_data, load_data, write_bins
+from file_io import chache_data, load_data, write_bins, read_xyz_file, read_transport_file
 from bin_sort import get_contact_bins, get_next_bins
 from utilities import common_elements
 
@@ -23,10 +23,14 @@ def main():
     Entry Point for Program
     """
 
+    # The loaded data are NOT numpy arrays (change later?)
+    (atom_types, atom_positions) = read_xyz_file(str(INPUT_FILE_NAME))
+    (region_list, interaction_distances) = read_transport_file()
+
     if LOAD_CACHE_DATA:
         data = load_data(INPUT_FILE_NAME)
     else:
-        data = prep_data(INPUT_FILE_NAME)
+        data = prep_data(atom_types, atom_positions, region_list, interaction_distances)
         chache_data(INPUT_FILE_NAME, data)
 
     dist_mtrx = data["dist_mtrx"]
@@ -36,7 +40,6 @@ def main():
     ordered_interact_mtrx = data["ordered_interact_mtrx"]
 
     num_atoms = np.size(dist_mtrx, axis=0)
-    region_list = data["region_list"]
 
     # Don't convert to np array in file_io because this complictes caching
     # (since numpy arrays non json-serialzable)
@@ -75,7 +78,7 @@ def main():
     
     print("bin_generations: " + str(bin_generations))
     
-    write_bins(bin_generations, INPUT_FILE_NAME)
+    write_bins(bin_generations, atom_positions, INPUT_FILE_NAME)
 
 
 
