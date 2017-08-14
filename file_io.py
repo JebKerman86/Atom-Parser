@@ -127,11 +127,27 @@ def read_transport_file():
 
 
 def write_bins(bin_generations, atom_positions, file_name):
+
+    num_atoms = len(atom_positions)
     file_name = file_name + ".jmol"
     file_path = "./" + OUTPUT_FOLDER_NAME + "/" + file_name
     outfile = open(file_path, 'w')
-    for ii in range(2):
-        outfile.write("abcdefg")
+
+    outfile.write(str(num_atoms) + "\n")
+    outfile.write("This file shows the principal layers into which the molecule has been sorted." + "\n")
+    
+    chem_elements = ["H", "O"]
+    
+    #line_num = 3
+    for gen_idx, generation in enumerate(bin_generations):
+        for bn in generation:
+            for atom_idx in bn:
+                # print("atom_idx: " + str(atom_idx))
+                line_str = chem_elements[gen_idx%2] + "    "
+                for coord in atom_positions[int(atom_idx)]:
+                    line_str = line_str + str(coord) + "    "
+                outfile.write(line_str + "\n")
+                #line_num += 1
 
 
 # -----------------------------------------------------------------------------

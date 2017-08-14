@@ -77,7 +77,10 @@ def main():
         curr_generation += 1
     
     print("bin_generations: " + str(bin_generations))
-    
+
+    #for now, leave off last generation, because it contains duplicate elements
+    #write_bins(bin_generations[:-1], atom_positions, INPUT_FILE_NAME)
+
     write_bins(bin_generations, atom_positions, INPUT_FILE_NAME)
 
 
