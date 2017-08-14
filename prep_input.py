@@ -89,7 +89,6 @@ def prep_data(input_file_name):
     np_ordered_interaction_matrix = np.zeros((num_atoms,num_atoms))
 
     np_ordered_index_matrix = np.argsort(np_dist_matrix, axis = 1)
-
     np_ordered_dist_matrix = np.sort(np_dist_matrix, axis = 1)
     
     for idx1 in range(0, num_atoms):
