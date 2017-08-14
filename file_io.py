@@ -64,7 +64,7 @@ def read_xyz_file(input_file_name):
 # -----------------------------------------------------------------------------
 
 
-def read_transport_file():
+def read_transport_file(input_file_name):
     """
     Reads File "input_file_name".dat, and returns lists containing the atom
     indices of the device atoms, as well as the atom indices of
@@ -72,7 +72,7 @@ def read_transport_file():
     which spcifies the maximum interaction distance between each type of atom.
     """
 
-    transport_file_path = "./" + INPUT_FOLDER_NAME + "/" + "transport.dat"
+    transport_file_path = "./" + INPUT_FOLDER_NAME + "/" + str(input_file_name) + "_" + "transport.dat"
     file = open(transport_file_path, 'r')
     max_file_lines = 1000
 

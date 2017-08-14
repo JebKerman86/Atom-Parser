@@ -25,7 +25,7 @@ def main():
 
     # The loaded data are NOT numpy arrays (change later?)
     (atom_types, atom_positions) = read_xyz_file(str(INPUT_FILE_NAME))
-    (region_list, interaction_distances) = read_transport_file()
+    (region_list, interaction_distances) = read_transport_file(str(INPUT_FILE_NAME))
 
     if LOAD_CACHE_DATA:
         data = load_data(INPUT_FILE_NAME)
