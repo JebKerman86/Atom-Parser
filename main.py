@@ -8,7 +8,7 @@ Created on Tue Aug  8 16:35:15 2017
 import numpy as np
 
 from prep_input import prep_data
-from file_io import chache_data, load_data
+from file_io import chache_data, load_data, write_bins
 from bin_sort import get_contact_bins, get_next_bins
 from utilities import common_elements
 
@@ -44,26 +44,25 @@ def main():
     for region in region_list:
         np_region_list.append(np.array(region))
 
-    # print(np_region_list)
-
-    # List of np-arrays. Each list element corresponds to the contact with the
-    # same index. The list element contains the indices of atoms in that
-    # contact that are interacting with device atoms
-    # contact_bins = []
-
     device = np_region_list[0]
     contacts = np_region_list[1:]
-    #print(contacts)
-    contact_bins = get_contact_bins(device, contacts, interact_mtrx)
 
+    contact_bins = get_contact_bins(device, contacts, interact_mtrx)
     prev_bins = list.copy(contacts)
     #print("prev_bins" + str(prev_bins))
-    
+
+    #Each element in "bin_generations" is a list of bins. Each of these lists
+    #contains the bins of a specific generation. The bins are sorted in the
+    #order of ascending contact indices.
+    #All bins that are the same number of steps away from the contacts are
+    #assigned to the same "generation", the atoms in "contact_bins" are
+    #in generation zero.
+    #"contact_bins": All contact atoms that are interacting with the device
+    # are assigned to this bin.
+
     bin_generations = []
     bin_generations.append(contact_bins)
     #print("bin_generations" + str(bin_generations))
-    # print(common_elements([[1,2,3],[4,5,6],[7,8,9],[10,11,12],[13,14,12]]))
-    
 
     curr_generation = 0
     while curr_generation < 1000:
@@ -75,30 +74,13 @@ def main():
         curr_generation += 1
     
     print("bin_generations: " + str(bin_generations))
+    
+    write_bins(bin_generations, INPUT_FILE_NAME)
+
+
 
     """
-    first_bins = get_next_bins(contact_bins, contacts, interact_mtrx)
-    prev_bins = contacts + first_bins
-    print(first_bins)
-    #print(prev_bins)
-    second_bins = get_next_bins(first_bins, prev_bins, interact_mtrx)
-    print(second_bins)
-    prev_bins = prev_bins + second_bins
-    third_bins = get_next_bins(second_bins, prev_bins, interact_mtrx)
-    print(third_bins)
-    
-    prev_bins = prev_bins + third_bins
-    fourth_bins = get_next_bins(third_bins, prev_bins, interact_mtrx)
-    print(fourth_bins)
-    
-    prev_bins = prev_bins + fourth_bins
-    fifth_bins = get_next_bins(fourth_bins, prev_bins, interact_mtrx)
-    print(fifth_bins)
-    """
-
-    """
-    ToDo: use NumPy instead of lists
-          use version controll
+    ToDo:
           Algorithm: Simultaneously, from all contacts move into device.
                      Partition such that all new partition atoms are in
                      contact with previous partition

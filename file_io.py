@@ -123,6 +123,16 @@ def read_transport_file():
 
     return (region_list, interaction_distances)
 
+# -----------------------------------------------------------------------------
+
+
+def write_bins(bin_generations, file_name):
+    file_name = file_name + ".jmol"
+    file_path = "./" + OUTPUT_FOLDER_NAME + "/" + file_name
+    outfile = open(file_path, 'w')
+    for ii in range(2):
+        outfile.write("abcdefg")
+
 
 # -----------------------------------------------------------------------------
 
