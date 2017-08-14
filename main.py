@@ -10,6 +10,7 @@ import numpy as np
 from prep_input import prep_data
 from file_io import chache_data, load_data
 from bin_sort import get_contact_bins, get_next_bins
+from utilities import common_elements
 
 LOAD_CACHE_DATA = False
 # Name without file ending:
@@ -52,11 +53,30 @@ def main():
 
     device = np_region_list[0]
     contacts = np_region_list[1:]
-    print(contacts)
+    #print(contacts)
     contact_bins = get_contact_bins(device, contacts, interact_mtrx)
 
-    prev_bins = []
+    prev_bins = list.copy(contacts)
+    #print("prev_bins" + str(prev_bins))
+    
+    bin_generations = []
+    bin_generations.append(contact_bins)
+    #print("bin_generations" + str(bin_generations))
+    # print(common_elements([[1,2,3],[4,5,6],[7,8,9],[10,11,12],[13,14,12]]))
+    
 
+    curr_generation = 0
+    while curr_generation < 1000:
+        curr_bins = get_next_bins(bin_generations[-1], prev_bins, interact_mtrx)
+        prev_bins = prev_bins + curr_bins
+        bin_generations.append(curr_bins)
+        if common_elements(curr_bins)[0]:
+            break
+        curr_generation += 1
+    
+    print("bin_generations: " + str(bin_generations))
+
+    """
     first_bins = get_next_bins(contact_bins, contacts, interact_mtrx)
     prev_bins = contacts + first_bins
     print(first_bins)
@@ -74,10 +94,8 @@ def main():
     prev_bins = prev_bins + fourth_bins
     fifth_bins = get_next_bins(fourth_bins, prev_bins, interact_mtrx)
     print(fifth_bins)
-    
-    
-    
-    
+    """
+
     """
     ToDo: use NumPy instead of lists
           use version controll
