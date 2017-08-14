@@ -9,6 +9,7 @@ import numpy as np
 
 from prep_input import prep_data
 from file_io import chache_data, load_data
+from bin_sort import get_contact_bins, get_next_bins
 
 LOAD_CACHE_DATA = False
 # Name without file ending:
@@ -47,42 +48,37 @@ def main():
     # List of np-arrays. Each list element corresponds to the contact with the
     # same index. The list element contains the indices of atoms in that
     # contact that are interacting with device atoms
-    contact_starter_atom_list = []
+    # contact_bins = []
 
     device = np_region_list[0]
     contacts = np_region_list[1:]
-
-    for contact in np_region_list[1:]:
-
-        contact_edge_list = []
-        for index_contact in contact:
-            for index_device in device:
-                if interact_mtrx[index_contact, index_device]:
-                    if not (index_contact in contact_edge_list):
-                        contact_edge_list.append(index_contact)
-        contact_starter_atom_list.append(np.array(contact_edge_list))
+    
+    contact_bins = get_contact_bins(device, contacts, interact_mtrx)
 
 
-    print(contact_starter_atom_list)
+    #print(contact_bins)
+
 
     #List of bins. Each element contains the bins corresponding to a contact
-    contact_bins = []
+    bins = []
     atoms = np.array(list(range(num_atoms)))
 
-    for contact in contact_starter_atom_list:
+    for contact in contact_bins:
         bin_candidates = np.array([])
         for atom_idx in contact:
             bin_add_candidates = atoms[interact_mtrx[atom_idx, :]]
             for cntct in contacts:
                 bin_add_candidates = [x for x in bin_add_candidates if x not in cntct]
             bin_candidates = np.r_[bin_candidates, bin_add_candidates]
-            print(bin_add_candidates)
+            #print(bin_add_candidates)
         bin_atoms = np.unique(bin_candidates)
-        print("bin_atoms: " + str(bin_atoms))
-        contact_bins.append(bin_atoms)
+        #print("bin_atoms: " + str(bin_atoms))
+        bins.append(bin_atoms)
+
+    print(get_next_bins(contact_bins, contacts, interact_mtrx))
+    print(bins)
 
 
-    print(contact_bins)
     """
     ToDo: use NumPy instead of lists
           use version controll
