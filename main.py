@@ -52,33 +52,32 @@ def main():
 
     device = np_region_list[0]
     contacts = np_region_list[1:]
-    
+    print(contacts)
     contact_bins = get_contact_bins(device, contacts, interact_mtrx)
 
+    prev_bins = []
 
-    #print(contact_bins)
-
-
-    #List of bins. Each element contains the bins corresponding to a contact
-    bins = []
-    atoms = np.array(list(range(num_atoms)))
-
-    for contact in contact_bins:
-        bin_candidates = np.array([])
-        for atom_idx in contact:
-            bin_add_candidates = atoms[interact_mtrx[atom_idx, :]]
-            for cntct in contacts:
-                bin_add_candidates = [x for x in bin_add_candidates if x not in cntct]
-            bin_candidates = np.r_[bin_candidates, bin_add_candidates]
-            #print(bin_add_candidates)
-        bin_atoms = np.unique(bin_candidates)
-        #print("bin_atoms: " + str(bin_atoms))
-        bins.append(bin_atoms)
-
-    print(get_next_bins(contact_bins, contacts, interact_mtrx))
-    print(bins)
-
-
+    first_bins = get_next_bins(contact_bins, contacts, interact_mtrx)
+    prev_bins = contacts + first_bins
+    print(first_bins)
+    #print(prev_bins)
+    second_bins = get_next_bins(first_bins, prev_bins, interact_mtrx)
+    print(second_bins)
+    prev_bins = prev_bins + second_bins
+    third_bins = get_next_bins(second_bins, prev_bins, interact_mtrx)
+    print(third_bins)
+    
+    prev_bins = prev_bins + third_bins
+    fourth_bins = get_next_bins(third_bins, prev_bins, interact_mtrx)
+    print(fourth_bins)
+    
+    prev_bins = prev_bins + fourth_bins
+    fifth_bins = get_next_bins(fourth_bins, prev_bins, interact_mtrx)
+    print(fifth_bins)
+    
+    
+    
+    
     """
     ToDo: use NumPy instead of lists
           use version controll

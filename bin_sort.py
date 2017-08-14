@@ -35,10 +35,15 @@ def get_next_bins(curr_bins, prev_bins, interact_mtrx):
     for curr_bin in curr_bins:
         bin_candidates = np.array([])
         for atom_idx in curr_bin:
+            #print(atom_idx)
+            #print(interact_mtrx[atom_idx, :])
             bin_add_candidates = atoms[interact_mtrx[atom_idx, :]]
             for prev_bin in prev_bins:
+                #print("prev_bin" + str(prev_bin))
                 bin_add_candidates = [x for x in bin_add_candidates if x not in prev_bin]
             bin_candidates = np.r_[bin_candidates, bin_add_candidates]
+            bin_candidates = [int(x) for x in bin_candidates]
+            #print("bin_candidates" + str(bin_candidates))
             #print(bin_add_candidates)
         bin_atoms = np.unique(bin_candidates)
         #print("bin_atoms: " + str(bin_atoms))
