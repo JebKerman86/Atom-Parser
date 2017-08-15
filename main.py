@@ -14,8 +14,10 @@ from utilities import common_elements
 
 LOAD_CACHE_DATA = False
 # Name without file ending:
-INPUT_FILE_NAME = "1d_kette"
+#INPUT_FILE_NAME = "SiNW"
+INPUT_FILE_NAME = "SiNW"
 
+MAX_GENERATIONS = 100
 
 def main():
 
@@ -43,13 +45,15 @@ def main():
 
     # Don't convert to np array in file_io because this complictes caching
     # (since numpy arrays non json-serialzable)
+    
     np_region_list = []
     for region in region_list:
         np_region_list.append(np.array(region))
+    
 
     device = np_region_list[0]
     contacts = np_region_list[1:]
-
+    print("contacts: " + str(contacts))
     contact_bins = get_contact_bins(device, contacts, interact_mtrx)
     prev_bins = list.copy(contacts)
     #print("prev_bins" + str(prev_bins))
@@ -62,21 +66,44 @@ def main():
     #in generation zero.
     #"contact_bins": All contact atoms that are interacting with the device
     # are assigned to this bin.
-
+    
+    print("contact_bins: " + str(contact_bins))
     bin_generations = []
     bin_generations.append(contact_bins)
     #print("bin_generations" + str(bin_generations))
 
     curr_generation = 0
-    while curr_generation < 1000:
+
+    # contact atoms count as sorted from the beginning
+    num_sorted_atoms = 0
+    for c in contacts:
+        num_sorted_atoms += len(c)
+    
+    while curr_generation < MAX_GENERATIONS:
         curr_bins = get_next_bins(bin_generations[-1], prev_bins, interact_mtrx)
+        print("curr_generation = " + str(curr_generation))
+        for b in curr_bins:
+            num_sorted_atoms += len(b)
+            print("bin: " + str(b))
         prev_bins = prev_bins + curr_bins
+        #print("prev_bins: " + str(prev_bins))
         bin_generations.append(curr_bins)
         if common_elements(curr_bins)[0]:
             break
+        if num_sorted_atoms >= num_atoms:
+            break
         curr_generation += 1
-    
-    print("bin_generations: " + str(bin_generations))
+
+    print("num_sorted_atoms: " + str(num_sorted_atoms))
+
+
+
+    print("bin_generations: ")
+    for gen in bin_generations:
+        line_str = ""
+        for b in gen:
+            line_str = line_str + str(b)
+        print(line_str)
 
     #for now, leave off last generation, because it contains duplicate elements
     #write_bins(bin_generations[:-1], atom_positions, INPUT_FILE_NAME)

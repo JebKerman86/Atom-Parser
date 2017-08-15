@@ -40,11 +40,14 @@ def read_xyz_file(input_file_name):
     while stripped_line != "" and iterations < max_file_lines:
 
         line_string = line.split()
-        atom_type_string = line_string[0]
-        atom_types.append(atom_type_string)
-        coord_string = line_string[1:]
-        coord_xyz = [float(i) for i in coord_string]
-        atom_positions.append(coord_xyz)
+
+        # jump over commented lines
+        if not line_string[0] == "#":
+            atom_type_string = line_string[0]
+            atom_types.append(atom_type_string)
+            coord_string = line_string[1:]
+            coord_xyz = [float(i) for i in coord_string]
+            atom_positions.append(coord_xyz)
 
         iterations += 1
         line = file.readline()
@@ -120,6 +123,8 @@ def read_transport_file(input_file_name):
         
         if stripped_line == '':
             break
+        
+    # print("In read_transport_file: " + str(region_list))
 
     return (region_list, interaction_distances)
 
@@ -128,7 +133,12 @@ def read_transport_file(input_file_name):
 
 def write_bins(bin_generations, atom_positions, file_name):
 
-    num_atoms = len(atom_positions)
+    # count atoms in "bin_generations":
+    num_atoms = 0
+    for gen in bin_generations:
+        for b in gen:
+            num_atoms += len(b)
+
     file_name = file_name + ".jmol"
     file_path = "./" + OUTPUT_FOLDER_NAME + "/" + file_name
     outfile = open(file_path, 'w')
