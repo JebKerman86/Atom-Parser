@@ -14,8 +14,10 @@ from utilities import common_elements
 
 LOAD_CACHE_DATA = False
 # Name without file ending:
-#INPUT_FILE_NAME = "SiNW"
+#INPUT_FILE_NAME = "1d_kette"
+#INPUT_FILE_NAME = "zno2wire"
 INPUT_FILE_NAME = "SiNW"
+OPEN_JMOL = True
 
 MAX_GENERATIONS = 100
 
@@ -108,9 +110,7 @@ def main():
     #for now, leave off last generation, because it contains duplicate elements
     #write_bins(bin_generations[:-1], atom_positions, INPUT_FILE_NAME)
 
-    write_bins(bin_generations, atom_positions, INPUT_FILE_NAME)
-
-
+    write_bins(bin_generations, atom_positions, INPUT_FILE_NAME, OPEN_JMOL)
 
     """
     ToDo:

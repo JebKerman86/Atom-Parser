@@ -6,6 +6,7 @@ Einlesen von .XYZ Dateien
 import numpy as np
 import json
 import os
+from subprocess import PIPE, Popen
 from pathlib import Path
 
 
@@ -48,6 +49,9 @@ def read_xyz_file(input_file_name):
             coord_string = line_string[1:]
             coord_xyz = [float(i) for i in coord_string]
             atom_positions.append(coord_xyz)
+        else:
+            # An atom was skipped
+            num_atoms -= 1
 
         iterations += 1
         line = file.readline()
@@ -131,7 +135,7 @@ def read_transport_file(input_file_name):
 # -----------------------------------------------------------------------------
 
 
-def write_bins(bin_generations, atom_positions, file_name):
+def write_bins(bin_generations, atom_positions, file_name, open_jmol):
 
     # count atoms in "bin_generations":
     num_atoms = 0
@@ -158,6 +162,12 @@ def write_bins(bin_generations, atom_positions, file_name):
                     line_str = line_str + str(coord) + "    "
                 outfile.write(line_str + "\n")
                 #line_num += 1
+
+    if open_jmol:
+        file_path = 'C:\\Users\\Benjamin\\Documents\\Praktikum_Aradi\\Atom-Parser\\output_files\\'
+        file_name = file_path + file_name
+        cmd = ['java', '-jar', r'C:\Users\Benjamin\Documents\Praktikum_Aradi\Jmol.jar', file_name]
+        proccess = Popen(cmd, stdout=PIPE, stdin=PIPE)
 
 
 # -----------------------------------------------------------------------------
