@@ -7,6 +7,7 @@ Created on Mon Aug 14 15:11:13 2017
 
 import numpy as np
 
+from utilities import remove_all
 
 def get_contact_bins(device, contacts, interact_mtrx):
 
@@ -50,3 +51,21 @@ def get_next_bins(curr_bins, prev_bins, interact_mtrx):
         next_bins.append(bin_atoms)
         
     return(next_bins)
+
+
+def remove_common_elems(curr_gen_cntct_chains, common_elems):
+    elems = []
+    for cntct_idx, contact_list in enumerate(common_elems):
+        elems_to_delete = []
+        for idx, atom_idx in enumerate(contact_list):
+            if not atom_idx in elems:
+                elems.append(atom_idx)
+            else:
+                elems_to_delete.append(atom_idx)
+        for atom_idx in elems_to_delete:
+            print("elems_to_delete: " + str(elems_to_delete))
+            curr_gen_cntct_chains[cntct_idx] =  \
+                remove_all(curr_gen_cntct_chains[cntct_idx], atom_idx)
+
+
+

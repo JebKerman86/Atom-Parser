@@ -16,7 +16,7 @@ def common_elements(list1, list2):
 """
 
 def common_elements(input_list):
-    any_commons = False
+    commons_found = False
     common_elems = [[]]*len(input_list)
     #print("input_list" + str(input_list))
     for idx1, elem1 in enumerate(input_list):
@@ -27,8 +27,24 @@ def common_elements(input_list):
                 print("commons: " + str(list(set(elem1) & set(elem2))) )
                 common_elems[idx1] = common_elems[idx1] + list(set(elem1) & set(elem2))
                 if not common_elems[idx1] == []:
-                    any_commons = True
-                    print("any_commons: " + str(any_commons))
+                    commons_found = True
+                    print("commons_found: " + str(commons_found))
 
-    return (any_commons, common_elems)
+    return (commons_found, common_elems)
 
+
+def remove_all(input_list, elem_to_remove):
+    """
+    Returns a copy of "input_list" in which all instances of "elem_to_remove"
+    have been removed.
+    """
+    idx_to_keep = []
+    for idx, elem in enumerate(input_list):
+        if not elem == elem_to_remove:
+            idx_to_keep.append(idx)
+    # Build new list "return_list":
+    return_list = []
+    for idx in idx_to_keep:
+        return_list = return_list + list([input_list[idx]])
+
+    return return_list

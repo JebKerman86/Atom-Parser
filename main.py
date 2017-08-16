@@ -9,8 +9,8 @@ import numpy as np
 
 from prep_input import prep_data
 from file_io import chache_data, load_data, write_bins, read_xyz_file, read_transport_file
-from bin_sort import get_contact_bins, get_next_bins
-from utilities import common_elements
+from bin_sort import get_contact_bins, get_next_bins, remove_common_elems
+from utilities import common_elements, remove_all
 
 LOAD_CACHE_DATA = False
 # Name without file ending:
@@ -68,11 +68,11 @@ def main():
     #in generation zero.
     #"contact_bins": All contact atoms that are interacting with the device
     # are assigned to this bin.
-    
+
     print("contact_bins: " + str(contact_bins))
     bin_generations = []
     bin_generations.append(contact_bins)
-    #print("bin_generations" + str(bin_generations))
+    # print("bin_generations" + str(bin_generations))
 
     curr_generation = 1
 
@@ -80,7 +80,7 @@ def main():
     num_sorted_atoms = 0
     for c in contacts:
         num_sorted_atoms += len(c)
-    
+
     while curr_generation < MAX_GENERATIONS:
         curr_bins = get_next_bins(bin_generations[-1], prev_bins, interact_mtrx)
         print("curr_generation = " + str(curr_generation))
@@ -88,10 +88,13 @@ def main():
             num_sorted_atoms += len(b)
             print("bin: " + str(b))
         prev_bins = prev_bins + curr_bins
-        #print("prev_bins: " + str(prev_bins))
+        # print("prev_bins: " + str(prev_bins))
         bin_generations.append(curr_bins)
-        if common_elements(curr_bins)[0]:
-            break
+        (commons_found, common_elems) = common_elements(curr_bins)
+        if commons_found:
+            print("common_elems: " + str(common_elems))
+            remove_common_elems(bin_generations[-1], common_elems)
+
         if num_sorted_atoms >= num_atoms:
             break
         curr_generation += 1
