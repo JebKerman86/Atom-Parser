@@ -65,7 +65,7 @@ def read_xyz_file(input_file_name):
     if num_atoms != len(atom_positions):
         print("falsche Atomanzahl: num_atoms != Atoms.count")
 
-    print(atom_positions)
+    # print(atom_positions)
     return (atom_types, atom_positions)
 
 
@@ -139,7 +139,7 @@ def read_transport_file(input_file_name):
         if stripped_line == '':
             break
         
-    print("In read_transport_file: " + str(region_list))
+    # print("In read_transport_file: " + str(region_list))
 
     return (region_list, interaction_distances)
 

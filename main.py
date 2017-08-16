@@ -9,15 +9,15 @@ import numpy as np
 
 from prep_input import prep_data
 from file_io import chache_data, load_data, write_bins, read_xyz_file, read_transport_file
-from bin_sort import get_contact_bins, get_next_bins, remove_common_elems
+from bin_sort import get_contact_bins, get_next_bins, remove_common_elems, create_subdomains
 from utilities import common_elements, remove_all
 
 LOAD_CACHE_DATA = False
 # Name without file ending:
-INPUT_FILE_NAME = "t-kreuzung"
+#INPUT_FILE_NAME = "t-kreuzung"
 # INPUT_FILE_NAME = "zno2wire"
-#INPUT_FILE_NAME = "SiNW"
-OPEN_JMOL = False
+INPUT_FILE_NAME = "SiNW"
+OPEN_JMOL = True
 
 MAX_GENERATIONS = 20
 
@@ -100,18 +100,36 @@ def main():
         curr_generation += 1
 
     print("num_sorted_atoms: " + str(num_sorted_atoms))
-
-
-
+    
     print("bin_generations: ")
     for gen in bin_generations:
         line_str = ""
-        for b in gen:
-            line_str = line_str + str(b)
+        for bn in gen:
+            line_str = line_str + str(bn)
         print(line_str)
 
-    #for now, leave off last generation, because it contains duplicate elements
-    #write_bins(bin_generations[:-1], atom_positions, INPUT_FILE_NAME)
+    """
+    contiguous_bin_generations = []
+    for gen in bin_generations:
+        contiguous_gen = []
+        for bn in gen:
+            divided_bin = create_subdomains(bn, interact_mtrx)
+            contiguous_gen.append(divided_bin)
+        contiguous_bin_generations.append(contiguous_gen)
+
+
+    print("contiguous_bin_generations: ")
+    for gen in contiguous_bin_generations:
+        line_str = ""
+        for bn in gen:
+            for sd in bn:
+                line_str = line_str + str(sd)
+            line_str = line_str + " -- "
+        print(line_str)
+
+    """
+
+    # print("subdomains: " + str(create_subdomains(bin_generations[3][1], interact_mtrx)))
 
     write_bins(bin_generations, atom_positions, INPUT_FILE_NAME, OPEN_JMOL)
 
@@ -129,8 +147,6 @@ def main():
                      If there is still ambigouity, use contact indices of
                      branches to establich merge order
     """
-
-    # Why no index "9" in contact? Interaction matrix is wrong!
 
 
 if __name__ == "__main__":
