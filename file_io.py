@@ -46,7 +46,7 @@ def read_xyz_file(input_file_name):
         if not line_string[0] == "#":
             atom_type_string = line_string[0]
             atom_types.append(atom_type_string)
-            coord_string = line_string[1:]
+            coord_string = line_string[1:4]
             coord_xyz = [float(i) for i in coord_string]
             atom_positions.append(coord_xyz)
         else:
@@ -65,6 +65,7 @@ def read_xyz_file(input_file_name):
     if num_atoms != len(atom_positions):
         print("falsche Atomanzahl: num_atoms != Atoms.count")
 
+    print(atom_positions)
     return (atom_types, atom_positions)
 
 
@@ -93,12 +94,20 @@ def read_transport_file(input_file_name):
     line = file.readline()
     entries = line.split()
     
-
+    #A single list of device atom indices.
+    device_region = []
+    # A list of lists, one list of atom indices for each contact.
+    contact_regions = []
     iterations = 0
     while iterations < max_file_lines:
 
-        region = list(range(int(entries[1]) - 1, int(entries[2])))
-        region_list.append(region)
+        new_indices = list(range(int(entries[1]) - 1, int(entries[2])))
+        if "Device" in entries[0]:
+            # Don't append, because we want a single list of indices for the
+            # device region.
+            device_region = device_region + new_indices
+        if "Contact" in entries[0]:
+            contact_regions.append(new_indices)
 
         line = file.readline()
         entries = line.split()
@@ -107,6 +116,8 @@ def read_transport_file(input_file_name):
         if not("Device" in entries[0] or "Contact" in entries[0]):
             break
 
+    region_list.append(device_region)
+    region_list += contact_regions
     interaction_distances = {}
 
     #line = file.readline()
@@ -128,7 +139,7 @@ def read_transport_file(input_file_name):
         if stripped_line == '':
             break
         
-    # print("In read_transport_file: " + str(region_list))
+    print("In read_transport_file: " + str(region_list))
 
     return (region_list, interaction_distances)
 

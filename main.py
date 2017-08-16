@@ -14,12 +14,12 @@ from utilities import common_elements
 
 LOAD_CACHE_DATA = False
 # Name without file ending:
-#INPUT_FILE_NAME = "1d_kette"
-#INPUT_FILE_NAME = "zno2wire"
-INPUT_FILE_NAME = "SiNW"
-OPEN_JMOL = True
+INPUT_FILE_NAME = "t-kreuzung"
+# INPUT_FILE_NAME = "zno2wire"
+#INPUT_FILE_NAME = "SiNW"
+OPEN_JMOL = False
 
-MAX_GENERATIONS = 100
+MAX_GENERATIONS = 20
 
 def main():
 
@@ -74,7 +74,7 @@ def main():
     bin_generations.append(contact_bins)
     #print("bin_generations" + str(bin_generations))
 
-    curr_generation = 0
+    curr_generation = 1
 
     # contact atoms count as sorted from the beginning
     num_sorted_atoms = 0
