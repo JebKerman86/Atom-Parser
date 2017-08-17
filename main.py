@@ -9,8 +9,8 @@ import numpy as np
 
 from prep_input import prep_data
 from file_io import chache_data, load_data, write_bins, read_xyz_file, read_transport_file
-from bin_sort import get_contact_bins, get_next_bins, remove_common_elems, create_subdomains
-from utilities import common_elements, remove_all
+from bin_sort import get_contact_bins, get_next_bins, remove_common_elems, create_subdomains, bins_are_neighbours, find_chain_collision, merge_chains
+from utilities import find_duplicates, remove_all, print_generations
 
 LOAD_CACHE_DATA = False
 # Name without file ending:
@@ -90,24 +90,18 @@ def main():
         prev_bins = prev_bins + curr_bins
         # print("prev_bins: " + str(prev_bins))
         bin_generations.append(curr_bins)
-        (commons_found, common_elems) = common_elements(curr_bins)
-        if commons_found:
+        (duplicates, common_elems) = find_duplicates(curr_bins)
+        if duplicates > 0:
             print("common_elems: " + str(common_elems))
             remove_common_elems(bin_generations[-1], common_elems)
+            num_sorted_atoms -= duplicates
 
         if num_sorted_atoms >= num_atoms:
             break
         curr_generation += 1
 
     print("num_sorted_atoms: " + str(num_sorted_atoms))
-    """
-    print("bin_generations: ")
-    for gen in bin_generations:
-        line_str = ""
-        for bn in gen:
-            line_str = line_str + str(bn)
-        print(line_str)
-    """
+
 
     contiguous_bin_generations = []
     for gen in bin_generations:
@@ -118,19 +112,19 @@ def main():
         contiguous_bin_generations.append(contiguous_gen)
 
 
+
     print("contiguous_bin_generations: ")
+    print_generations(contiguous_bin_generations)
+    
     for gen in contiguous_bin_generations:
-        line_str = ""
-        for bn in gen:
-            for sd in bn:
-                line_str = line_str + str(sd)
-            line_str = line_str + " -- "
-        print(line_str)
-
-
-    # print("subdomains: " + str(create_subdomains(bin_generations[3][1], interact_mtrx)))
+        (collision_found, collisions) = find_chain_collision(gen, interact_mtrx)
+        if collision_found:
+            merged_bin_generations = merge_chains(contiguous_bin_generations)
 
     write_bins(bin_generations, atom_positions, INPUT_FILE_NAME, OPEN_JMOL)
+
+
+    #print(find_duplicates([[1,2,3,4,5],[1,2,3,7,8],[1,8],[9,7,1,4,2]])[0])
 
     """
     ToDo:

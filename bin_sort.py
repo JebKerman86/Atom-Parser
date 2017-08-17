@@ -118,3 +118,33 @@ def create_subdomains(bin_to_divide, interact_mtrx):
 
     return list.copy(subdomains)
 
+
+def bins_are_neighbours(bin1, bin2, interact_mtrx):
+
+    for sd1 in bin1:
+        for sd2 in bin2:
+            for atom_idx1 in sd1:
+                for atom_idx2 in sd2:
+                    if interact_mtrx[atom_idx1, atom_idx2]:
+                        return True
+    return False
+
+
+def find_chain_collision(generation, interact_mtrx):
+
+    collisions = []
+    for bin_idx1, bin1 in enumerate(generation):
+        for bin_idx2, bin2 in enumerate(generation):
+            if bin_idx2 < bin_idx1:
+                if bins_are_neighbours(bin1, bin2,interact_mtrx):
+                    collisions.append((bin_idx1, bin_idx2))
+                    
+    if collisions == []:
+        return (False, (-1,-1))
+    else:
+        return (True, collisions)
+
+
+def merge_chains(bin_generations):
+    print("merge a chain")
+    return 0
