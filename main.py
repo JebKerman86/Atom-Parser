@@ -14,10 +14,10 @@ from utilities import common_elements, remove_all
 
 LOAD_CACHE_DATA = False
 # Name without file ending:
-#INPUT_FILE_NAME = "t-kreuzung"
+INPUT_FILE_NAME = "t-kreuzung"
 # INPUT_FILE_NAME = "zno2wire"
-INPUT_FILE_NAME = "SiNW"
-OPEN_JMOL = True
+#INPUT_FILE_NAME = "SiNW"
+OPEN_JMOL = False
 
 MAX_GENERATIONS = 20
 
@@ -47,11 +47,11 @@ def main():
 
     # Don't convert to np array in file_io because this complictes caching
     # (since numpy arrays non json-serialzable)
-    
+
     np_region_list = []
     for region in region_list:
         np_region_list.append(np.array(region))
-    
+
 
     device = np_region_list[0]
     contacts = np_region_list[1:]
@@ -100,15 +100,15 @@ def main():
         curr_generation += 1
 
     print("num_sorted_atoms: " + str(num_sorted_atoms))
-    
+    """
     print("bin_generations: ")
     for gen in bin_generations:
         line_str = ""
         for bn in gen:
             line_str = line_str + str(bn)
         print(line_str)
-
     """
+
     contiguous_bin_generations = []
     for gen in bin_generations:
         contiguous_gen = []
@@ -127,7 +127,6 @@ def main():
             line_str = line_str + " -- "
         print(line_str)
 
-    """
 
     # print("subdomains: " + str(create_subdomains(bin_generations[3][1], interact_mtrx)))
 
