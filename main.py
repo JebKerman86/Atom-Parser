@@ -15,10 +15,11 @@ from utilities import find_duplicates, remove_all, print_generations
 
 LOAD_CACHE_DATA = False
 # Name without file ending:
-INPUT_FILE_NAME = "t-kreuzung"
+INPUT_FILE_NAME = "t-kreuzung_dick"
+#INPUT_FILE_NAME = "t-kreuzung_sackgasse"
 # INPUT_FILE_NAME = "zno2wire"
 #INPUT_FILE_NAME = "SiNW"
-OPEN_JMOL = False
+OPEN_JMOL = True
 
 MAX_GENERATIONS = 20
 
@@ -138,6 +139,9 @@ def main():
     print("keep_chains: ")
     print(keep_chains)
     
+    
+    
+    
     for collisions in collision_list[0:-1]:
         for col_tuple in collisions[1]:
             col_gen_idx = collisions[0]
@@ -168,11 +172,23 @@ def main():
             if idx+1 < len(bn):
                 line_str = line_str + " -- "
         print(line_str)
+        
+        
+    
+    
 
     write_bins(bin_generations, atom_positions, INPUT_FILE_NAME, OPEN_JMOL)
-
-
-    #print(find_duplicates([[1,2,3,4,5],[1,2,3,7,8],[1,8],[9,7,1,4,2]])[0])
+    
+    
+    
+    # rewrite code to work with subchains instead of subdomains:
+    # When merging bins, merge the two subchains that are next to eachother
+    # Right now, when merging bins, subdomains are kept separate, even if
+    # they are right next to eachother
+    
+    # BLind alley (Sackgasse) detection:
+    # A subchain that doesn't end in a collision is blind alley.
+    # These need to be trimmed off before any chain merging is attempted.
 
     """
     ToDo:
