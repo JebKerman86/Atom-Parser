@@ -9,7 +9,8 @@ import numpy as np
 
 from prep_input import prep_data
 from file_io import chache_data, load_data, write_bins, read_xyz_file, read_transport_file
-from bin_sort import get_contact_bins, get_next_bins, remove_common_elems, create_subdomains, bins_are_neighbours, find_chain_collision, merge_chains
+from bin_sort import get_contact_bins, get_next_bins, remove_common_elems, \
+                     create_subdomains, find_all_collisions, merge_chain, glue_chains
 from utilities import find_duplicates, remove_all, print_generations
 
 LOAD_CACHE_DATA = False
@@ -102,7 +103,6 @@ def main():
 
     print("num_sorted_atoms: " + str(num_sorted_atoms))
 
-
     contiguous_bin_generations = []
     for gen in bin_generations:
         contiguous_gen = []
@@ -115,11 +115,59 @@ def main():
 
     print("contiguous_bin_generations: ")
     print_generations(contiguous_bin_generations)
+
+
+    collision_list = find_all_collisions(contiguous_bin_generations, interact_mtrx)
+    print("collision_list: ")
+    print(collision_list)
     
+    # The last collision between chains is the collision between the longest
+    # two chains. These are the chains we want to keep.
+    last_col_list = collision_list[-1][1]
+    if last_col_list == []:
+        print("No collisions between chains detected (since last_col_list == [])")
+        print("Something is weird. Exiting...")
+
+    if len(last_col_list) > 1:
+        print("Last collision is not unique. Don't know how to handle this yet.")
+        print("Something is weird. Exiting...")
+
+
+    last_col = last_col_list[0]
+    keep_chains = (min(last_col),max(last_col))
+    print("keep_chains: ")
+    print(keep_chains)
+    
+    for collisions in collision_list[0:-1]:
+        for col_tuple in collisions[1]:
+            col_gen_idx = collisions[0]
+            contiguous_bin_generations = \
+                merge_chain(contiguous_bin_generations, col_gen_idx, col_tuple)
+
+    print("contiguous_bin_generations: ")
+    print_generations(contiguous_bin_generations)
+    
+    final_chain1 = []
     for gen in contiguous_bin_generations:
-        (collision_found, collisions) = find_chain_collision(gen, interact_mtrx)
-        if collision_found:
-            merged_bin_generations = merge_chains(contiguous_bin_generations)
+        final_chain1.append(gen[keep_chains[0]])
+        
+    final_chain2 = []
+    for gen in contiguous_bin_generations:
+        final_chain2.append(gen[keep_chains[1]])
+    
+
+    
+    final_chain = glue_chains(final_chain1, final_chain2)
+    
+    print("\nfinal_chain: ")
+    
+    for bn in final_chain:
+        line_str = ""
+        for idx, sd in enumerate(bn):
+            line_str = line_str + str(sd)
+            if idx+1 < len(bn):
+                line_str = line_str + " -- "
+        print(line_str)
 
     write_bins(bin_generations, atom_positions, INPUT_FILE_NAME, OPEN_JMOL)
 

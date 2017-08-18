@@ -6,6 +6,7 @@ Created on Mon Aug 14 15:11:13 2017
 """
 
 import numpy as np
+from copy import deepcopy
 
 from utilities import remove_all
 
@@ -130,12 +131,14 @@ def bins_are_neighbours(bin1, bin2, interact_mtrx):
     return False
 
 
-def find_chain_collision(generation, interact_mtrx):
-
+def check_generation_for_collisions(generation, interact_mtrx):
+    
+    # Return list of collision tuples, since there can be multiple collisions
+    # in a generation
     collisions = []
     for bin_idx1, bin1 in enumerate(generation):
         for bin_idx2, bin2 in enumerate(generation):
-            if bin_idx2 < bin_idx1:
+            if bin_idx2 > bin_idx1:
                 if bins_are_neighbours(bin1, bin2,interact_mtrx):
                     collisions.append((bin_idx1, bin_idx2))
                     
@@ -145,6 +148,74 @@ def find_chain_collision(generation, interact_mtrx):
         return (True, collisions)
 
 
-def merge_chains(bin_generations):
-    print("merge a chain")
-    return 0
+def find_all_collisions(bin_generations, interact_mtrx):
+    
+    # col_list is list of tuples:
+    # [ (gen_idx1, [(chain_idx1,chain_idx2), (chain_idx1,chain_idx2)]),
+    #   (gen_idx2, [(chain_idx1, chain_idx2)]) ]
+    col_list = []
+
+    for gen_idx, gen in enumerate(bin_generations):
+        col = check_generation_for_collisions(gen, interact_mtrx)
+        if col[0]:
+            col_list.append((gen_idx, col[1]))
+
+    return col_list
+
+
+def merge_chain(bin_generations, col_gen_idx, col_tuple):
+
+    merged_bin_generations = []
+    for gen in bin_generations:
+        merged_bin_generations.append(deepcopy(gen))
+
+    # Handle cases when more than two chains collide at same time at same place
+    # col_tuple[0] always contains the smaller chain index
+    #print("col_tuple")
+    #print(col_tuple)
+    for gen_idx in range(col_gen_idx+1):
+        #print("gen_idx " + str(gen_idx))
+        merged_bin = deepcopy(merged_bin_generations[gen_idx][col_tuple[0]]) \
+                   + deepcopy(merged_bin_generations[gen_idx][col_tuple[1]])
+        #print(merged_bin)
+        merged_bin_generations[gen_idx][col_tuple[0]] = merged_bin
+        merged_bin_generations[gen_idx][col_tuple[1]] = []
+
+    return merged_bin_generations
+
+
+
+def glue_chains(chain1, chain2):
+    """
+    Glue dangling ends of two chains together:
+    [0 --> chain1  -->  -1]  +  [-1  -->  chain2  -->  0]
+    """
+    
+    new_chain = []
+    
+    for bn in chain1:
+        new_chain.append(deepcopy(bn))
+        
+    for ii in range(1, len(chain2)+1):
+        idx = len(chain2) - ii
+        new_chain.append(deepcopy(chain2[idx]))
+        
+    return new_chain
+
+
+
+"""
+def find_contacts_to_keep(bin_generations):
+    
+    Find the two contacts that should be left over after merging.
+    These are the two contacts that have the most bins (principal layers)
+    between them.
+    
+    num_ctcts = len(bin_generations[0])
+    for cntct_idx1 in num_ctcts:
+        for cntc_idx2 in num_ctcts:
+            if cntc_idx2 > cntct_idx1:
+                
+"""
+
+
