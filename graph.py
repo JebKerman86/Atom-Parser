@@ -5,6 +5,20 @@ Created on Thu Aug 17 12:58:05 2017
 @author: Benjamin
 """
 
+
+"""
+>>> n = Node(5)
+>>> p = Node(6)
+>>> q = Node(7)
+>>> n.add_child(p)
+>>> n.add_child(q)
+>>> n.children
+[<__main__.Node object at 0x02877FF0>, <__main__.Node object at 0x02877F90>]
+>>> for c in n.children:
+...   print c.data
+"""
+
+"""
 import networkx as nx
 import matplotlib.pyplot as plt
 
@@ -45,3 +59,4 @@ def plot_graph(G):
     plt.axis('off')
     plt.savefig("labels_and_colors.png") # save as png
     plt.show() # display
+"""

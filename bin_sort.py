@@ -70,64 +70,19 @@ def remove_common_elems(curr_gen_cntct_chains, common_elems):
             else:
                 elems_to_delete.append(atom_idx)
         for atom_idx in elems_to_delete:
-            print("elems_to_delete: " + str(elems_to_delete))
+            # print("elems_to_delete: " + str(elems_to_delete))
             curr_gen_cntct_chains[cntct_idx] =  \
                 remove_all(curr_gen_cntct_chains[cntct_idx], atom_idx)
 
 
-def contiguity_check(bin_to_check, starter_atom_idx, interact_mtrx):
-    # num_atoms = np.size(interact_mtrx, axis=0)
-    reached_atoms = []
-    # print("num_atoms = " + str(num_atoms))
-
-    if starter_atom_idx not in bin_to_check:
-        print("Bad input in contiguity_check: " +
-              "The provided ""starter_atom_idx"" was not in bin_to_check.")
-        return []
-
-    atoms_to_add_to_reached_atoms = [starter_atom_idx]
-    while not atoms_to_add_to_reached_atoms == []:
-        reached_atoms = reached_atoms + atoms_to_add_to_reached_atoms
-        atoms_to_add_to_reached_atoms = []
-        for atom_idx1 in reached_atoms:
-            for atom_idx2 in bin_to_check:
-                # print("atom_idx2: " + str(atom_idx2))
-                if interact_mtrx[atom_idx1, atom_idx2]:
-                        if atom_idx2 not in reached_atoms:
-                            if atom_idx2 not in atoms_to_add_to_reached_atoms:
-                                # print("added atom_idx2: " + str(atom_idx2))
-                                atoms_to_add_to_reached_atoms.append(atom_idx2)
-
-    return np.array(reached_atoms)
-
-
-def create_subdomains(bin_to_divide, interact_mtrx):
-    subdomains = []
-    # num_atoms = np.size(interact_mtrx, axis=0)
-
-    unreached_atoms = np.copy(bin_to_divide).tolist()
-    iterations = 0
-    while (not unreached_atoms == []) and (iterations < 1000):
-        iterations += 1
-        starter_atom_idx = unreached_atoms[0]
-        subdomains.append(contiguity_check(bin_to_divide, starter_atom_idx, interact_mtrx))
-    
-        unreached_atoms = np.copy(bin_to_divide).tolist()
-        for sd in subdomains:
-            for atom_idx in sd:
-                unreached_atoms.remove(atom_idx)
-
-    return list.copy(subdomains)
-
 
 def bins_are_neighbours(bin1, bin2, interact_mtrx):
 
-    for sd1 in bin1:
-        for sd2 in bin2:
-            for atom_idx1 in sd1:
-                for atom_idx2 in sd2:
-                    if interact_mtrx[atom_idx1, atom_idx2]:
-                        return True
+    for atom_idx1 in bin1:
+        for atom_idx2 in bin2:
+            if atom_idx2 > atom_idx1:
+                if interact_mtrx[atom_idx1, atom_idx2]:
+                    return True
     return False
 
 
@@ -139,17 +94,18 @@ def check_generation_for_collisions(generation, interact_mtrx):
     for bin_idx1, bin1 in enumerate(generation):
         for bin_idx2, bin2 in enumerate(generation):
             if bin_idx2 > bin_idx1:
-                if bins_are_neighbours(bin1, bin2,interact_mtrx):
+                col = bins_are_neighbours(bin1, bin2,interact_mtrx)
+                if col:
                     collisions.append((bin_idx1, bin_idx2))
                     
     if collisions == []:
-        return (False, (-1,-1))
+        return (False, [(-1,-1)])
     else:
         return (True, collisions)
 
 
 def find_all_collisions(bin_generations, interact_mtrx):
-    
+
     # col_list is list of tuples:
     # [ (gen_idx1, [(chain_idx1,chain_idx2), (chain_idx1,chain_idx2)]),
     #   (gen_idx2, [(chain_idx1, chain_idx2)]) ]
@@ -171,15 +127,23 @@ def merge_chain(bin_generations, col_gen_idx, col_tuple):
 
     # Handle cases when more than two chains collide at same time at same place
     # col_tuple[0] always contains the smaller chain index
-    #print("col_tuple")
-    #print(col_tuple)
+    # print("col_tuple")
+    # print(col_tuple)
+    # print("merged_bin_generations[0][2]: ")
+    # print(merged_bin_generations[0][2] + merged_bin_generations[0][0])
     for gen_idx in range(col_gen_idx+1):
-        #print("gen_idx " + str(gen_idx))
-        merged_bin = deepcopy(merged_bin_generations[gen_idx][col_tuple[0]]) \
-                   + deepcopy(merged_bin_generations[gen_idx][col_tuple[1]])
-        #print(merged_bin)
+        # print("gen_idx " + str(gen_idx))
+        merged_bin = np.concatenate(
+                (deepcopy(merged_bin_generations[gen_idx][col_tuple[0]]),
+                 deepcopy(merged_bin_generations[gen_idx][col_tuple[1]])),
+                 axis=0)
+        print("merged_bin: ")
+        print(merged_bin)
         merged_bin_generations[gen_idx][col_tuple[0]] = merged_bin
         merged_bin_generations[gen_idx][col_tuple[1]] = []
+        
+    # print("merged_bin_generations: ")
+    # print(merged_bin_generations)
 
     return merged_bin_generations
 

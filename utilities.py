@@ -72,11 +72,13 @@ def remove_all(input_list, elem_to_remove):
 
 
 def print_generations(bin_generations):
-    for gen in bin_generations:
+    for gen_idx, gen in enumerate(bin_generations):
+        #print("gen_idx: " + str(gen_idx))
+        #print(gen)
         line_str = ""
         for bn in gen:
-            for sd in bn:
-                line_str = line_str + str(sd)
+            #print("bn: " + str(bn))
+            line_str = line_str + str(bn)
             line_str = line_str + " -- "
         print(line_str)
 
