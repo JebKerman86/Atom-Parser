@@ -146,13 +146,12 @@ def read_transport_file(input_file_name):
 # -----------------------------------------------------------------------------
 
 
-def write_bins(bin_generations, atom_positions, file_name, open_jmol):
+def write_bins(final_chain, atom_positions, file_name, open_jmol):
 
     # count atoms in "bin_generations":
     num_atoms = 0
-    for gen in bin_generations:
-        for b in gen:
-            num_atoms += len(b)
+    for gen in final_chain:
+        num_atoms += len(gen)
 
     file_name = file_name + ".jmol"
     file_path = "./" + OUTPUT_FOLDER_NAME + "/" + file_name
@@ -164,15 +163,14 @@ def write_bins(bin_generations, atom_positions, file_name, open_jmol):
     chem_elements = ["H", "O"]
     
     #line_num = 3
-    for gen_idx, generation in enumerate(bin_generations):
-        for bn in generation:
-            for atom_idx in bn:
-                # print("atom_idx: " + str(atom_idx))
-                line_str = chem_elements[gen_idx%2] + "    "
-                for coord in atom_positions[int(atom_idx)]:
-                    line_str = line_str + str(coord) + "    "
-                outfile.write(line_str + "\n")
-                #line_num += 1
+    for gen_idx, generation in enumerate(final_chain):
+        for atom_idx in generation:
+            # print("atom_idx: " + str(atom_idx))
+            line_str = chem_elements[gen_idx%2] + "    "
+            for coord in atom_positions[int(atom_idx)]:
+                line_str = line_str + str(coord) + "    "
+            outfile.write(line_str + "\n")
+            #line_num += 1
 
     if open_jmol:
         file_path = 'C:\\Users\\Benjamin\\Documents\\Praktikum_Aradi\\Atom-Parser\\output_files\\'

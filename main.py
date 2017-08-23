@@ -15,7 +15,7 @@ from utilities import find_duplicates, remove_all, print_generations
 
 LOAD_CACHE_DATA = False
 # Name without file ending:
-INPUT_FILE_NAME = "t-kreuzung"
+INPUT_FILE_NAME = "caffeine"
 # INPUT_FILE_NAME = "t-kreuzung_sackgasse"
 # INPUT_FILE_NAME = "zno2wire"
 #INPUT_FILE_NAME = "SiNW"
@@ -190,20 +190,21 @@ def main():
     print(line_str)
 
 
-    # WRITE-BINS NEEDS TO BE UPDATED TO ACCEPT "final_chain" INSTEAD OF "bin_generations"
-    write_bins(bin_generations, atom_positions, INPUT_FILE_NAME, OPEN_JMOL)
+
+    write_bins(final_chain, atom_positions, INPUT_FILE_NAME, OPEN_JMOL)
 
 
-    
-    # rewrite code to work with subchains instead of subdomains:
-    # When merging bins, merge the two subchains that are next to eachother
-    # Right now, when merging bins, subdomains are kept separate, even if
-    # they are right next to eachother
-    
-    # BLind alley (Sackgasse) detection:
-    # A subchain that doesn't end in a collision is blind alley.
-    # These need to be trimmed off before any chain merging is attempted.
-
+    """
+    Problem:
+        When chains collide, the tips of the chains can end up in
+        different generations (because one of the chains snatches up
+        the last atoms between the chains)
+        In this case, collisions are not detected at the moment.
+        Possible solutions:
+            - Make sure that tips of chains at collision point are always
+             in the same generation?
+             - Or maybe check for collisions between generations?
+    """
     """
     ToDo:
           Algorithm: Simultaneously, from all contacts move into device.

@@ -112,6 +112,8 @@ def find_all_collisions(bin_generations, interact_mtrx):
     col_list = []
 
     for gen_idx, gen in enumerate(bin_generations):
+        # PROBLEM: WHAT HAPPENS IF THERE ARE COLLISIONS BETWEEN BINS IN DIFFERENT
+        # GENERATIONS? 
         col = check_generation_for_collisions(gen, interact_mtrx)
         if col[0]:
             col_list.append((gen_idx, col[1]))
