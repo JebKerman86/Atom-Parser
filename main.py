@@ -6,6 +6,7 @@ Created on Tue Aug  8 16:35:15 2017
 """
 
 import numpy as np
+from copy import deepcopy
 
 from prep_input import prep_data
 from file_io import chache_data, load_data, write_bins, read_xyz_file, read_transport_file
@@ -15,13 +16,15 @@ from utilities import find_duplicates, remove_all, print_generations
 
 LOAD_CACHE_DATA = False
 # Name without file ending:
-INPUT_FILE_NAME = "caffeine"
+# INPUT_FILE_NAME = "caffeine"
+INPUT_FILE_NAME = "1d_kette"
 # INPUT_FILE_NAME = "t-kreuzung_sackgasse"
+# INPUT_FILE_NAME = "t-kreuzung_dick"
 # INPUT_FILE_NAME = "zno2wire"
-#INPUT_FILE_NAME = "SiNW"
+# INPUT_FILE_NAME = "SiNW"
 OPEN_JMOL = True
 
-MAX_GENERATIONS = 20
+MAX_GENERATIONS = 100
 
 def main():
 
@@ -94,7 +97,7 @@ def main():
         bin_generations.append(curr_bins)
         (duplicates, common_elems) = find_duplicates(curr_bins)
         if duplicates > 0:
-            # print("common_elems: " + str(common_elems))
+            print("common_elems: " + str(common_elems))
             remove_common_elems(bin_generations[-1], common_elems)
             num_sorted_atoms -= duplicates
 
@@ -138,12 +141,15 @@ def main():
     # Merge all colliding chains that are not collisions between
     # the two keep_chains (ie. the last collision)
     bin_generations_merged = []
+    for gen in bin_generations:
+        bin_generations_merged.append(deepcopy(gen))
+        
     # This leaves out the last collision
     for collisions in collision_list[0:-1]:
         for col_tuple in collisions[1]:
             col_gen_idx = collisions[0]
-            bin_generations_merged = \
-                merge_chain(bin_generations, col_gen_idx, col_tuple)
+            merge_chain(bin_generations_merged, bin_generations, col_gen_idx, col_tuple)
+
 
     print("bin_generations_merged: ")
     print_generations(bin_generations_merged)

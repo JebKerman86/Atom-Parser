@@ -121,11 +121,7 @@ def find_all_collisions(bin_generations, interact_mtrx):
     return col_list
 
 
-def merge_chain(bin_generations, col_gen_idx, col_tuple):
-
-    merged_bin_generations = []
-    for gen in bin_generations:
-        merged_bin_generations.append(deepcopy(gen))
+def merge_chain(merged_bin_generations, bin_generations, col_gen_idx, col_tuple):
 
     # Handle cases when more than two chains collide at same time at same place
     # col_tuple[0] always contains the smaller chain index
@@ -146,8 +142,6 @@ def merge_chain(bin_generations, col_gen_idx, col_tuple):
         
     # print("merged_bin_generations: ")
     # print(merged_bin_generations)
-
-    return merged_bin_generations
 
 
 
