@@ -15,14 +15,13 @@ from utilities import find_duplicates, remove_all, print_generations
 
 LOAD_CACHE_DATA = False
 # Name without file ending:
-# INPUT_FILE_NAME = "caffeine"
-INPUT_FILE_NAME = "t-kreuzung"
+INPUT_FILE_NAME = "caffeine"
 # INPUT_FILE_NAME = "t-kreuzung_sackgasse"
 # INPUT_FILE_NAME = "zno2wire"
 #INPUT_FILE_NAME = "SiNW"
-OPEN_JMOL = False
+OPEN_JMOL = True
 
-MAX_GENERATIONS = 100
+MAX_GENERATIONS = 20
 
 def main():
 
@@ -60,7 +59,7 @@ def main():
     contacts = np_region_list[1:]
     # print("contacts: " + str(contacts))
     contact_bins = get_contact_bins(device, contacts, interact_mtrx)
-    added_bins = list.copy(contacts)
+    prev_bins = list.copy(contacts)
     #print("prev_bins" + str(prev_bins))
 
     #Each element in "bin_generations" is a list of bins. Each of these lists
@@ -85,12 +84,12 @@ def main():
         num_sorted_atoms += len(c)
 
     while curr_generation < MAX_GENERATIONS:
-        (curr_bins, prev_bins) = get_next_bins(bin_generations[-1], added_bins, interact_mtrx)
+        curr_bins = get_next_bins(bin_generations[-1], prev_bins, interact_mtrx)
         # print("curr_generation = " + str(curr_generation))
         for b in curr_bins:
             num_sorted_atoms += len(b)
             # print("bin: " + str(b))
-        added_bins = added_bins + curr_bins
+        prev_bins = prev_bins + curr_bins
         # print("prev_bins: " + str(prev_bins))
         bin_generations.append(curr_bins)
         (duplicates, common_elems) = find_duplicates(curr_bins)
