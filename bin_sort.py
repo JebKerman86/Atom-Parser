@@ -27,7 +27,7 @@ def get_contact_bins(device, contacts, interact_mtrx):
 
 
 
-def get_next_bins(curr_bins, prev_bins, interact_mtrx):
+def get_next_bins_old(curr_bins, prev_bins, interact_mtrx):
     """
     List of bins. Each element contains the bins corresponding to a contact.
     """
@@ -53,6 +53,65 @@ def get_next_bins(curr_bins, prev_bins, interact_mtrx):
         next_bins.append(bin_atoms)
         
     return(next_bins)
+
+
+
+def get_next_bins(curr_bins, prev_bins, interact_mtrx):
+    """
+    List of bins. Each element contains the bins corresponding to a contact.
+    """
+    next_bins = []
+    add_to_curr_bins = []
+    num_atoms = np.size(interact_mtrx, axis=0)
+    atoms = np.array(list(range(num_atoms)))
+    chain_tips = deepcopy(curr_bins)
+
+    for curr_bin_idx, curr_bin in enumerate(curr_bins):
+        bin_candidates = np.array([])
+        for atom_idx in curr_bin:
+            #print(atom_idx)
+            #print(interact_mtrx[atom_idx, :])
+            next_bin_add_candidates = atoms[interact_mtrx[atom_idx, :]]
+            
+            # Only allow atoms in next_bin_add_candidates if they are not in a previous bin
+            for prev_bin in prev_bins:
+                #print("prev_bin" + str(prev_bin))
+                next_bin_add_candidates = [x for x in next_bin_add_candidates if x not in prev_bin]
+            
+            
+            #If atom in next_bin_add_candidates is interacting with the tip of another chain:
+            # Add it to curr_bin instead of next_bins
+            curr_bin_add_candidates = []
+            for tip_idx, chain_tip in enumerate(chain_tips):
+                if not curr_bin_idx == tip_idx:
+                    for atom_idx in chain_tip:
+                        for next_bin_add_candidate in next_bin_add_candidates:
+                            if interact_mtrx[next_bin_add_candidate, atom_idx]:
+                                curr_bin_add_candidates.append(next_bin_add_candidate)
+                                
+            # Remove atoms in curr_bin_add_candidates from next_bin_add_candidates:
+            next_bin_add_candidates = [x for x in next_bin_add_candidates if x not in curr_bin_add_candidates]
+            
+            
+            next_bin_candidates = np.r_[next_bin_candidates, next_bin_add_candidates]
+            curr_bin_candidates = np.r_[curr_bin_candidates, curr_bin_add_candidates]
+            next_bin_candidates = [int(x) for x in next_bin_candidates]
+            curr_bin_candidates = [int(x) for x in curr_bin_candidates]
+            #print("bin_candidates" + str(bin_candidates))
+            #print(bin_add_candidates)
+        next_bin_atoms = np.unique(next_bin_candidates)
+        curr_bin_atoms = np.unique(curr_bin_candidates)
+        #print("bin_atoms: " + str(bin_atoms))
+        
+        next_bins.append(next_bin_atoms)
+        add_to_curr_bins.append(curr_bin_atoms)
+    
+    
+    for curr_bin_idx, curr_bin in enumerate(curr_bins):
+        
+    
+    return(next_bins, curr_bins)
+
 
 
 def remove_common_elems(curr_gen_cntct_chains, common_elems):
@@ -82,6 +141,7 @@ def bins_are_neighbours(bin1, bin2, interact_mtrx):
         for atom_idx2 in bin2:
             if atom_idx2 > atom_idx1:
                 if interact_mtrx[atom_idx1, atom_idx2]:
+                    print(str(bin1) + " / " + str(bin2))
                     return True
     return False
 
