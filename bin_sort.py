@@ -55,7 +55,7 @@ def get_next_bins(curr_bins, prev_bins, interact_mtrx):
     return(next_bins)
 
 
-def remove_common_elems(curr_gen_cntct_chains, common_elems):
+def remove_common_elems(last_gen_cntct_chains, curr_gen_cntct_chains, common_elems):
     """
     Takes the bins at tips of each contact chain and ensures that there are no
     duplicate atoms in these bins. The atom in the contact chain with
@@ -67,6 +67,13 @@ def remove_common_elems(curr_gen_cntct_chains, common_elems):
         for idx, atom_idx in enumerate(contact_list):
             if not atom_idx in elems:
                 elems.append(atom_idx)
+                print("add atom_idx: " + str(atom_idx))
+                # last_gen_cntct_chains[cntct_idx] = \
+                #     np.r_[ last_gen_cntct_chains[cntct_idx], np.array([atom_idx]) ]
+                # last_gen_cntct_chains[cntct_idx] = \
+                #     [int(x) for x in last_gen_cntct_chains[cntct_idx]]
+                # print(last_gen_cntct_chains[cntct_idx])
+                # elems_to_delete.append(atom_idx)
             else:
                 elems_to_delete.append(atom_idx)
         for atom_idx in elems_to_delete:
@@ -135,6 +142,7 @@ def merge_chain(merged_bin_generations, bin_generations, col_gen_idx, col_tuple)
                 (deepcopy(merged_bin_generations[gen_idx][col_tuple[0]]),
                  deepcopy(merged_bin_generations[gen_idx][col_tuple[1]])),
                  axis=0)
+        merged_bin = [int(x) for x in merged_bin]
         print("merged_bin: ")
         print(merged_bin)
         merged_bin_generations[gen_idx][col_tuple[0]] = merged_bin

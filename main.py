@@ -87,21 +87,23 @@ def main():
         num_sorted_atoms += len(c)
 
     while curr_generation < MAX_GENERATIONS:
+        print(curr_generation)
         curr_bins = get_next_bins(bin_generations[-1], prev_bins, interact_mtrx)
         # print("curr_generation = " + str(curr_generation))
         for b in curr_bins:
             num_sorted_atoms += len(b)
             # print("bin: " + str(b))
-        prev_bins = prev_bins + curr_bins
         # print("prev_bins: " + str(prev_bins))
+        prev_bins = prev_bins + curr_bins
         bin_generations.append(curr_bins)
         (duplicates, common_elems) = find_duplicates(curr_bins)
-        if duplicates > 0:
+        if duplicates > 0 and len(bin_generations) > 1:
             print("common_elems: " + str(common_elems))
-            remove_common_elems(bin_generations[-1], common_elems)
+            remove_common_elems(bin_generations[-2], bin_generations[-1], common_elems)
             num_sorted_atoms -= duplicates
 
         if num_sorted_atoms >= num_atoms:
+            print("num_sorted_atoms >= num_atoms, num_sorted_atoms = " + str(num_sorted_atoms))
             break
         curr_generation += 1
 
@@ -114,7 +116,12 @@ def main():
     print("bin_generations: ")
     print_generations(bin_generations)
 
-
+    """
+    IMPORTANT: ADD THIS TO PROGRAM !!!
+    Add to Collision detection: If bin at tip of chain is empty, then
+    check bin from the previous generation for collision (otherwise,
+    collisions will be missed)
+    """
     collision_list = find_all_collisions(bin_generations, interact_mtrx)
     print("collision_list: ")
     print(collision_list)
