@@ -93,15 +93,24 @@ def bins_are_neighbours(bin1, bin2, interact_mtrx):
     return False
 
 
-def check_generation_for_collisions(generation, interact_mtrx):
+def check_generation_for_collisions(bin_generations, gen_idx, interact_mtrx):
     
+    curr_generation = bin_generations[gen_idx]
+    if gen_idx-1 > 0:
+        prev_generation = bin_generations[gen_idx-1]
+
     # Return list of collision tuples, since there can be multiple collisions
     # in a generation
     collisions = []
-    for bin_idx1, bin1 in enumerate(generation):
-        for bin_idx2, bin2 in enumerate(generation):
+    for bin_idx1, bin1 in enumerate(curr_generation):
+        for bin_idx2, bin2 in enumerate(curr_generation):
             if bin_idx2 > bin_idx1:
-                col = bins_are_neighbours(bin1, bin2,interact_mtrx)
+                if (not bin1 == []) and (not bin2 == []):
+                    col = bins_are_neighbours(bin1, bin2,interact_mtrx)
+                if bin1 == []:
+                    col = bins_are_neighbours(prev_generation[bin_idx1], bin2,interact_mtrx)
+                if bin2 == []:
+                    col = bins_are_neighbours(bin1, prev_generation[bin_idx2],interact_mtrx)
                 if col:
                     collisions.append((bin_idx1, bin_idx2))
                     
@@ -118,10 +127,8 @@ def find_all_collisions(bin_generations, interact_mtrx):
     #   (gen_idx2, [(chain_idx1, chain_idx2)]) ]
     col_list = []
 
-    for gen_idx, gen in enumerate(bin_generations):
-        # PROBLEM: WHAT HAPPENS IF THERE ARE COLLISIONS BETWEEN BINS IN DIFFERENT
-        # GENERATIONS? 
-        col = check_generation_for_collisions(gen, interact_mtrx)
+    for gen_idx in range(len(bin_generations)):
+        col = check_generation_for_collisions(bin_generations, gen_idx, interact_mtrx)
         if col[0]:
             col_list.append((gen_idx, col[1]))
 
