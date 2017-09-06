@@ -17,8 +17,8 @@ from utilities import find_duplicates, remove_all, print_generations
 LOAD_CACHE_DATA = False
 # Name without file ending:
 # INPUT_FILE_NAME = "caffeine"
-INPUT_FILE_NAME = "1d_kette"
-# INPUT_FILE_NAME = "t-kreuzung_sackgasse"
+# INPUT_FILE_NAME = "1d_kette"
+INPUT_FILE_NAME = "t-kreuzung_sackgasse"
 # INPUT_FILE_NAME = "t-kreuzung_dick"
 # INPUT_FILE_NAME = "zno2wire"
 # INPUT_FILE_NAME = "SiNW"
@@ -116,12 +116,6 @@ def main():
     print("bin_generations: ")
     print_generations(bin_generations)
 
-    """
-    IMPORTANT: ADD THIS TO PROGRAM !!!
-    Add to Collision detection: If bin at tip of chain is empty, then
-    check bin from the previous generation for collision (otherwise,
-    collisions will be missed)
-    """
     collision_list = find_all_collisions(bin_generations, interact_mtrx)
     print("collision_list: ")
     print(collision_list)
@@ -145,12 +139,13 @@ def main():
     print(keep_chains)
 
 
-    # Merge all colliding chains that are not collisions between
-    # the two keep_chains (ie. the last collision)
     bin_generations_merged = []
     for gen in bin_generations:
         bin_generations_merged.append(deepcopy(gen))
         
+    # Merge all colliding chains that are not collisions between
+    # the two keep_chains (ie. the last collision)
+
     # This leaves out the last collision
     for collisions in collision_list[0:-1]:
         for col_tuple in collisions[1]:
@@ -162,7 +157,6 @@ def main():
     print_generations(bin_generations_merged)
 
     gen_idx_of_last_collision = collision_list[-1][0]
-
     print("gen_idx_of_last_collision: " + str(gen_idx_of_last_collision))
 
     # In the "else" branch, we are merging dead ends
@@ -172,18 +166,17 @@ def main():
         if gen_idx <= gen_idx_of_last_collision:
             final_chain1.append(gen[keep_chains[0]])
         else:
-            print("gen: " + str(gen))
+            print("Merging dead end. Moving atom with idx: " + str(gen[keep_chains[0]]))
             for atom_idx in gen[keep_chains[0]]:
                 final_chain1[-1] = np.append(final_chain1[-1], [atom_idx])
-                
-                
-                
+
+
     final_chain2 = []
     for gen_idx, gen in enumerate(bin_generations_merged):
         if gen_idx <= gen_idx_of_last_collision:
             final_chain2.append(gen[keep_chains[1]])
         else:
-            print("gen: " + str(gen))
+            print("Merging dead end. Moving atom with idx: " + str(gen[keep_chains[1]]))
             for atom_idx in gen[keep_chains[1]]:
                 final_chain2[-1] = np.append(final_chain2[-1], [atom_idx])
 

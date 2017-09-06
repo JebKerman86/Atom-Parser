@@ -8,7 +8,7 @@ Created on Mon Aug 14 15:11:13 2017
 import numpy as np
 from copy import deepcopy
 
-from utilities import remove_all
+from utilities import remove_all, print_generations
 
 def get_contact_bins(device, contacts, interact_mtrx):
 
@@ -126,12 +126,58 @@ def find_all_collisions(bin_generations, interact_mtrx):
     # [ (gen_idx1, [(chain_idx1,chain_idx2), (chain_idx1,chain_idx2)]),
     #   (gen_idx2, [(chain_idx1, chain_idx2)]) ]
     col_list = []
+    num_chains = len(bin_generations[0])
+    all_chain_idxs = list(range(num_chains))
+    # "-1" in uncollided_chain_idxs is a dummy value that allows while loop to begin
+    uncollided_chain_idxs = [-1]
+    iterations = 1
 
-    for gen_idx in range(len(bin_generations)):
-        col = check_generation_for_collisions(bin_generations, gen_idx, interact_mtrx)
-        if col[0]:
-            col_list.append((gen_idx, col[1]))
+    while not uncollided_chain_idxs == [] and iterations < 10:
+        iterations += 1
+        col_list = []
 
+        for gen_idx in range(len(bin_generations)):
+            col = check_generation_for_collisions(bin_generations, gen_idx, interact_mtrx)
+            if col[0]:
+                col_list.append((gen_idx, col[1]))
+        
+        # Figure out whether any chains have NOT collided with eachother
+        collided_chain_idxs = []
+        print("col_list" + str(col_list))
+        for col in col_list:
+            col_tuple = col[1][0]
+            print("col_tuple: " + str(col_tuple))
+            collided_chain_idxs.append(col_tuple[0])
+            collided_chain_idxs.append(col_tuple[1])
+        print("collided_chain_idxs: " + str(collided_chain_idxs))
+    
+        uncollided_chain_idxs = []
+        for chain_idx in all_chain_idxs:
+            if not chain_idx in collided_chain_idxs:
+                uncollided_chain_idxs.append(chain_idx)
+        print("uncollided_chain_idxs: " + str(uncollided_chain_idxs))
+        
+        # For all uncollided chains, merge the last bin into the second to
+        # last bin.
+        # First: Find last full bin in each uncollided chain:
+        for chain_idx in uncollided_chain_idxs:
+            for gen_idx, gen in enumerate(bin_generations):
+                bn = gen[chain_idx]
+                print("bn: " + str(bn))
+                if len(bn) == 0:
+                    last_full_bin_gen_idx = gen_idx-1
+                    print("break")
+                    break
+            print("last_full_bin_gen_idx: " + str(last_full_bin_gen_idx))
+            for atom_idx in bin_generations[last_full_bin_gen_idx][chain_idx]:
+                bin_generations[last_full_bin_gen_idx-1][chain_idx] = \
+                    np.append(bin_generations[last_full_bin_gen_idx-1][chain_idx], np.array([atom_idx]))
+            bin_generations[last_full_bin_gen_idx][chain_idx] = []
+        
+        print("bin_generations: ")
+        print_generations(bin_generations)
+    
+    
     return col_list
 
 
