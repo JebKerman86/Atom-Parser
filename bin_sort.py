@@ -55,31 +55,26 @@ def get_next_bins(curr_bins, prev_bins, interact_mtrx):
     return(next_bins)
 
 
-def remove_common_elems(last_gen_cntct_chains, curr_gen_cntct_chains, common_elems):
+def remove_common_elems(prev_gen, curr_gen, common_elems_by_chain):
     """
     Takes the bins at tips of each contact chain and ensures that there are no
     duplicate atoms in these bins. The atom in the contact chain with
     the smallest index is kept.
     """
-    elems = []
-    for cntct_idx, contact_list in enumerate(common_elems):
+    atoms_to_delete = []
+    for chain_idx, common_atoms in enumerate(common_elems_by_chain):
         elems_to_delete = []
-        for idx, atom_idx in enumerate(contact_list):
-            if not atom_idx in elems:
-                elems.append(atom_idx)
+        for idx, atom_idx in enumerate(common_atoms):
+            if not atom_idx in atoms_to_delete:
+                atoms_to_delete.append(atom_idx)
                 print("add atom_idx: " + str(atom_idx))
-                # last_gen_cntct_chains[cntct_idx] = \
-                #     np.r_[ last_gen_cntct_chains[cntct_idx], np.array([atom_idx]) ]
-                # last_gen_cntct_chains[cntct_idx] = \
-                #     [int(x) for x in last_gen_cntct_chains[cntct_idx]]
-                # print(last_gen_cntct_chains[cntct_idx])
-                # elems_to_delete.append(atom_idx)
-            else:
-                elems_to_delete.append(atom_idx)
-        for atom_idx in elems_to_delete:
+                prev_gen[chain_idx] = \
+                     np.append(prev_gen[chain_idx], np.array([atom_idx]) )
+
+        for atom_idx in atoms_to_delete:
             # print("elems_to_delete: " + str(elems_to_delete))
-            curr_gen_cntct_chains[cntct_idx] =  \
-                remove_all(curr_gen_cntct_chains[cntct_idx], atom_idx)
+            curr_gen[chain_idx] =  \
+                remove_all(curr_gen[chain_idx], atom_idx)
 
 
 
