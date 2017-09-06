@@ -108,13 +108,17 @@ def check_generation_for_collisions(bin_generations, gen_idx, interact_mtrx):
                 if (not bin1 == []) and (not bin2 == []):
                     col = bins_are_neighbours(bin1, bin2,interact_mtrx)
                 if bin1 == []:
+                    print("check prev gen")
                     col = bins_are_neighbours(prev_generation[bin_idx1], bin2,interact_mtrx)
                 if bin2 == []:
+                    print("check prev gen")
                     col = bins_are_neighbours(bin1, prev_generation[bin_idx2],interact_mtrx)
                 if col:
+                    print("bin1" + str(bin1))
+                    print("bin2" + str(bin2))
                     collisions.append((bin_idx1, bin_idx2))
                     
-    if collisions == []:
+    if len(collisions) == 0:
         return (False, [(-1,-1)])
     else:
         return (True, collisions)
@@ -159,29 +163,59 @@ def find_all_collisions(bin_generations, interact_mtrx):
         
         # For all uncollided chains, merge the last bin into the second to
         # last bin.
-        # First: Find last full bin in each uncollided chain:
         for chain_idx in uncollided_chain_idxs:
-            for gen_idx, gen in enumerate(bin_generations):
-                bn = gen[chain_idx]
-                print("bn: " + str(bn))
-                if len(bn) == 0:
-                    last_full_bin_gen_idx = gen_idx-1
-                    print("break")
-                    break
-            print("last_full_bin_gen_idx: " + str(last_full_bin_gen_idx))
-            for atom_idx in bin_generations[last_full_bin_gen_idx][chain_idx]:
-                bin_generations[last_full_bin_gen_idx-1][chain_idx] = \
-                    np.append(bin_generations[last_full_bin_gen_idx-1][chain_idx], np.array([atom_idx]))
-            bin_generations[last_full_bin_gen_idx][chain_idx] = []
-        
-        print("bin_generations: ")
+            merge_chain_tip(bin_generations, chain_idx)
+
+        print("In find_all_collisions: bin_generations: ")
         print_generations(bin_generations)
-    
-    
+
     return col_list
 
 
-def merge_chain(merged_bin_generations, bin_generations, col_gen_idx, col_tuple):
+def find_chain_tip_idx(bin_generations, chain_idx):
+    for gen_idx, gen in enumerate(bin_generations):
+        bn = gen[chain_idx]
+        if len(bn) == 0:
+            last_full_bin_gen_idx = gen_idx-1
+            return last_full_bin_gen_idx
+        
+
+def merge_chain_tip(bin_generations, chain_idx):
+    chain_tip_gen_idx = find_chain_tip_idx(bin_generations, chain_idx)
+
+    for atom_idx in bin_generations[chain_tip_gen_idx][chain_idx]:
+        bin_generations[chain_tip_gen_idx-1][chain_idx] = \
+            np.append(bin_generations[chain_tip_gen_idx-1][chain_idx], np.array([atom_idx]))
+    bin_generations[chain_tip_gen_idx][chain_idx] = np.array([])
+    
+    new_tip_gen_idx = chain_tip_gen_idx - 1
+    return new_tip_gen_idx
+
+
+def check_collision(collision_list, chain_idx, chain_tip_gen_idx):
+
+    for collision in collision_list:
+        if chain_tip_gen_idx == collision[0]:
+            for col_tuple in collision[1]:
+                if chain_idx in col_tuple:
+                    return True
+
+    return False
+
+
+def trim_until_collision(bin_generations, collision_list, chain_idx):
+
+    has_collided = False
+    tip_gen_idx = find_chain_tip_idx(bin_generations, chain_idx)
+    while tip_gen_idx > 0:
+        has_collided = check_collision(collision_list, chain_idx, tip_gen_idx)
+        if has_collided == True:
+            break
+        merge_chain_tip(bin_generations, chain_idx)
+        tip_gen_idx = find_chain_tip_idx(bin_generations, chain_idx)
+
+
+def merge_chain(merged_bin_generations, bin_generations, collision_list, col_gen_idx, col_tuple):
 
     # Handle cases when more than two chains collide at same time at same place
     # col_tuple[0] always contains the smaller chain index
@@ -189,17 +223,32 @@ def merge_chain(merged_bin_generations, bin_generations, col_gen_idx, col_tuple)
     # print(col_tuple)
     # print("merged_bin_generations[0][2]: ")
     # print(merged_bin_generations[0][2] + merged_bin_generations[0][0])
+    
+    chain1_idx = col_tuple[0]
+    chain2_idx = col_tuple[1]
+
+    """
+    Check whether any of the two collided chains have uncollided tips.
+    If so, trim the chains down until the tip is involved in a collision
+    """
+    trim_until_collision(merged_bin_generations, collision_list, chain1_idx)
+    trim_until_collision(merged_bin_generations, collision_list, chain2_idx)
+    
+    print("In merge_chain: bin_generations: ")
+    print_generations(merged_bin_generations)
+
+    
     for gen_idx in range(col_gen_idx+1):
         # print("gen_idx " + str(gen_idx))
         merged_bin = np.concatenate(
-                (deepcopy(merged_bin_generations[gen_idx][col_tuple[0]]),
-                 deepcopy(merged_bin_generations[gen_idx][col_tuple[1]])),
+                (deepcopy(merged_bin_generations[gen_idx][chain1_idx]),
+                 deepcopy(merged_bin_generations[gen_idx][chain2_idx])),
                  axis=0)
         merged_bin = [int(x) for x in merged_bin]
         print("merged_bin: ")
         print(merged_bin)
-        merged_bin_generations[gen_idx][col_tuple[0]] = merged_bin
-        merged_bin_generations[gen_idx][col_tuple[1]] = []
+        merged_bin_generations[gen_idx][chain1_idx] = merged_bin
+        merged_bin_generations[gen_idx][chain2_idx] = np.array([])
         
     # print("merged_bin_generations: ")
     # print(merged_bin_generations)

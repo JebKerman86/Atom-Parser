@@ -86,6 +86,7 @@ def main():
     for c in contacts:
         num_sorted_atoms += len(c)
 
+
     while curr_generation < MAX_GENERATIONS:
         print(curr_generation)
         curr_bins = get_next_bins(bin_generations[-1], prev_bins, interact_mtrx)
@@ -150,7 +151,7 @@ def main():
     for collisions in collision_list[0:-1]:
         for col_tuple in collisions[1]:
             col_gen_idx = collisions[0]
-            merge_chain(bin_generations_merged, bin_generations, col_gen_idx, col_tuple)
+            merge_chain(bin_generations_merged, bin_generations, collision_list, col_gen_idx, col_tuple)
 
 
     print("bin_generations_merged: ")
