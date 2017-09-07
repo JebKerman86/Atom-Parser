@@ -94,7 +94,6 @@ def main():
         for b in curr_bins:
             num_sorted_atoms += len(b)
             # print("bin: " + str(b))
-        # print("prev_bins: " + str(prev_bins))
         prev_bins = prev_bins + curr_bins
         bin_generations.append(curr_bins)
         (duplicates, common_elems) = find_duplicates(curr_bins)
@@ -108,8 +107,6 @@ def main():
             break
         curr_generation += 1
 
-    print("num_sorted_atoms: " + str(num_sorted_atoms))
-
     # contiguous_bin_generations = []
     # contiguous_bin_generations = create_subchain_tree(bin_generations, interact_mtrx)
     # print("contiguous_bin_generations: ")
@@ -118,12 +115,12 @@ def main():
     print_generations(bin_generations)
 
     collision_list = find_all_collisions(bin_generations, interact_mtrx)
-    print("collision_list: ")
-    print(collision_list)
+    print("collision_list: " + str(collision_list))
 
     
     # The last collision between chains is the collision between the longest
     # two chains. These are the chains we want to keep.
+
     last_col_list = collision_list[-1][1]
     if last_col_list == []:
         print("No collisions between chains detected (since last_col_list == [])")

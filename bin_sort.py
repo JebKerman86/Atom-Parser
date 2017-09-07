@@ -38,16 +38,17 @@ def get_next_bins(curr_bins, prev_bins, interact_mtrx):
     for curr_bin in curr_bins:
         bin_candidates = np.array([])
         for atom_idx in curr_bin:
-            #print(atom_idx)
-            #print(interact_mtrx[atom_idx, :])
+            # print(atom_idx)
+            # print(interact_mtrx[atom_idx, :])
             bin_add_candidates = atoms[interact_mtrx[atom_idx, :]]
             for prev_bin in prev_bins:
                 #print("prev_bin" + str(prev_bin))
                 bin_add_candidates = [x for x in bin_add_candidates if x not in prev_bin]
-            bin_candidates = np.r_[bin_candidates, bin_add_candidates]
+                bin_add_candidates = np.array(bin_add_candidates)
+            bin_candidates = np.append(bin_candidates, bin_add_candidates)
             bin_candidates = [int(x) for x in bin_candidates]
-            #print("bin_candidates" + str(bin_candidates))
-            #print(bin_add_candidates)
+            # print("bin_add_candidates" + str(bin_add_candidates))
+            # print("bin_candidates" + str(bin_candidates))
         bin_atoms = np.unique(bin_candidates)
         #print("bin_atoms: " + str(bin_atoms))
         next_bins.append(bin_atoms)
@@ -63,7 +64,6 @@ def remove_common_elems(prev_gen, curr_gen, common_elems_by_chain):
     """
     atoms_to_delete = []
     for chain_idx, common_atoms in enumerate(common_elems_by_chain):
-        elems_to_delete = []
         for idx, atom_idx in enumerate(common_atoms):
             if not atom_idx in atoms_to_delete:
                 atoms_to_delete.append(atom_idx)
@@ -82,10 +82,39 @@ def bins_are_neighbours(bin1, bin2, interact_mtrx):
 
     for atom_idx1 in bin1:
         for atom_idx2 in bin2:
-            if atom_idx2 > atom_idx1:
-                if interact_mtrx[atom_idx1, atom_idx2]:
-                    return True
+            #if atom_idx2 > atom_idx1:   (????????)
+            if interact_mtrx[atom_idx1, atom_idx2]:
+                return True
     return False
+
+
+def check_for_collisions(bin_generations, gen_idx1, gen_idx2, interact_mtrx):
+    # print("Entering check_for_collisions...")
+    # print("gen_idx1 = " + str(gen_idx1))
+    # print("gen_idx2 = " + str(gen_idx2))
+    
+    gen1 = bin_generations[gen_idx1]
+    gen2 = bin_generations[gen_idx2]
+    # print("gen1: " + str(gen1))
+    # print("gen2" + str(gen2))
+    
+    collisions = []
+    for bin_idx1, bin1 in enumerate(gen1):
+        for bin_idx2, bin2 in enumerate(gen2):
+            if bin_idx2 > bin_idx1:
+                col = bins_are_neighbours(bin1, bin2,interact_mtrx)
+                if col:
+                    print("collision detected: ")
+                    print("bin1" + str(bin1))
+                    print("bin2" + str(bin2))
+                    collisions.append([(gen_idx1, gen_idx2),(bin_idx1, bin_idx2)])
+                    
+    # print("Exiting check_for_collisions.")
+    if len(collisions) == 0:
+        return (False, [(-1,-1)])
+    else:
+        return (True, collisions)
+
 
 
 def check_generation_for_collisions(bin_generations, gen_idx, interact_mtrx):
@@ -109,6 +138,7 @@ def check_generation_for_collisions(bin_generations, gen_idx, interact_mtrx):
                     print("check prev gen")
                     col = bins_are_neighbours(bin1, prev_generation[bin_idx2],interact_mtrx)
                 if col:
+                    print("collision detected: ")
                     print("bin1" + str(bin1))
                     print("bin2" + str(bin2))
                     collisions.append((bin_idx1, bin_idx2))
@@ -120,26 +150,47 @@ def check_generation_for_collisions(bin_generations, gen_idx, interact_mtrx):
 
 
 def find_all_collisions(bin_generations, interact_mtrx):
-
+    
+    print("Entering find_all_collisions... ")
     # col_list is list of tuples:
     # [ (gen_idx1, [(chain_idx1,chain_idx2), (chain_idx1,chain_idx2)]),
     #   (gen_idx2, [(chain_idx1, chain_idx2)]) ]
+    
+    intergen_col_list = []
+    for gen_idx1, gen1 in enumerate(bin_generations):
+        for gen_idx2, gen2 in enumerate(bin_generations):
+            if gen_idx2 >= gen_idx1:
+                col = check_for_collisions(bin_generations, gen_idx1, gen_idx2, interact_mtrx)
+                if col[0]:
+                    intergen_col_list.append(col)
+    
+    
+    print("intergen_col_list: ")
+    print(intergen_col_list)
+    
     col_list = []
     num_chains = len(bin_generations[0])
     all_chain_idxs = list(range(num_chains))
     # "-1" in uncollided_chain_idxs is a dummy value that allows while loop to begin
     uncollided_chain_idxs = [-1]
     iterations = 1
-
+    
+    
+    """
+    DO I NEED THIS WHILE LOOP ?????!!?
+    """
+    """
     while not uncollided_chain_idxs == [] and iterations < 10:
         iterations += 1
         col_list = []
+    """
 
-        for gen_idx in range(len(bin_generations)):
-            col = check_generation_for_collisions(bin_generations, gen_idx, interact_mtrx)
-            if col[0]:
-                col_list.append((gen_idx, col[1]))
-        
+    for gen_idx in range(len(bin_generations)):
+        col = check_generation_for_collisions(bin_generations, gen_idx, interact_mtrx)
+        # print("gen_idx = " + str(gen_idx) + "  /  col = " + str(col))
+        if col[0]:
+            col_list.append((gen_idx, col[1]))
+    """
         # Figure out whether any chains have NOT collided with eachother
         collided_chain_idxs = []
         print("col_list" + str(col_list))
@@ -163,7 +214,8 @@ def find_all_collisions(bin_generations, interact_mtrx):
 
         print("In find_all_collisions: bin_generations: ")
         print_generations(bin_generations)
-
+    """
+    print("Exiting find_all_collisions... ")
     return col_list
 
 
