@@ -147,23 +147,49 @@ def main():
 
     print("chains: ")
     print_generations(chains)
-
+    step = 0
     num_gen = len(chains)
     for gen_idx in range(gen_idx_of_last_collision+1, num_gen):
         print("gen_idx = " + str(gen_idx))
 
-        for step, chain_idx in enumerate(final_chain_idxs):
-            target_chain_idx = final_chain_idxs[(step+1)%2]
-            print("chain_idx = " + str(chain_idx))
+        for idx, src_chain_idx in enumerate(final_chain_idxs):
+            target_chain_idx = final_chain_idxs[(idx+1)%2]
+            print("chain_idx = " + str(src_chain_idx))
             print("target_chain_idx = " + str(target_chain_idx))
             target_bin = chains[gen_idx_of_last_collision-step][target_chain_idx]
-            src_bin = chains[gen_idx][chain_idx]
+            src_bin = chains[gen_idx][src_chain_idx]
             print("target_bin = " + str(target_bin))
             print("src_bin = " + str(src_bin))
-            np.append(target_bin, deepcopy(src_bin))
-            chains[gen_idx][chain_idx] = np.array([])
+            target_bin = np.append(target_bin, deepcopy(src_bin))
+            target_bin = np.array([int(x) for x in target_bin])
+            chains[gen_idx_of_last_collision-step][target_chain_idx] = target_bin
+            chains[gen_idx][src_chain_idx] = np.array([])
+        step += 1
+
+    #WHY ARE SOME OF THE BINS IN THE CHAIN NOT NUMPY ARRAYS ?!?
+
+    final_chain1 = []
+    for gen in chains:
+        add_bin = gen[final_chain_idxs[0]]
+        if not len(add_bin) == 0:
+            final_chain1.append(add_bin)
+        else:
+            break
+    
+    print(final_chain1)
 
 
+    final_chain2 = []
+    for gen in chains:
+        add_bin = gen[final_chain_idxs[1]]
+        if not len(add_bin) == 0:
+            final_chain2.append(add_bin)
+        else:
+            break
+        
+    print_generations(final_chain2)
+
+    final_chain = glue_chains(final_chain1, final_chain1)
 
     """
     # In the "else" branch, we are merging dead ends
@@ -180,8 +206,8 @@ def main():
     """
 
 
-    print("chains: ")
-    print_generations(chains)
+    print("final_chain: ")
+    print_generations(final_chain)
 
 
 
