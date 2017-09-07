@@ -11,7 +11,7 @@ from copy import deepcopy
 from prep_input import prep_data
 from file_io import chache_data, load_data, write_bins, read_xyz_file, read_transport_file
 from bin_sort import get_contact_bins, get_next_bins, remove_common_elems, \
-                     find_all_collisions, merge_chain, glue_chains
+                     find_all_collisions, merge_chain, glue_chains, bins_are_neighbours, merge
 from utilities import find_duplicates, remove_all, print_generations
 
 LOAD_CACHE_DATA = False
@@ -75,45 +75,120 @@ def main():
     # are assigned to this bin.
 
     print("contact_bins: " + str(contact_bins))
-    bin_generations = []
-    bin_generations.append(contact_bins)
+    chains = []
+    chains.append(contact_bins)
     # print("bin_generations" + str(bin_generations))
 
-    curr_generation = 1
+    num_chains = len(contacts)
+    """
+    active_chains = []
+    for c in range(num_chains):
+        active_chains.append(True)
+    print("active_chains: " + str(active_chains))
+    """
+    print("num_chains: " + str(num_chains))
+    curr_gen_idx = 1
 
     # contact atoms count as sorted from the beginning
     num_sorted_atoms = 0
     for c in contacts:
         num_sorted_atoms += len(c)
+        
+    final_collision_found = False
+    final_chain_idxs = []
+    gen_idx_of_last_collision = -1
 
+    while curr_gen_idx < MAX_GENERATIONS:
+        print("curr_gen_idx: " + str(curr_gen_idx))
+        curr_gen = get_next_bins(chains[-1], prev_bins, interact_mtrx)
 
-    while curr_generation < MAX_GENERATIONS:
-        print(curr_generation)
-        curr_bins = get_next_bins(bin_generations[-1], prev_bins, interact_mtrx)
-        # print("curr_generation = " + str(curr_generation))
-        for b in curr_bins:
-            num_sorted_atoms += len(b)
-            # print("bin: " + str(b))
-        prev_bins = prev_bins + curr_bins
-        bin_generations.append(curr_bins)
-        (duplicates, common_elems) = find_duplicates(curr_bins)
-        if duplicates > 0 and len(bin_generations) > 1:
-            print("common_elems: " + str(common_elems))
-            remove_common_elems(bin_generations[-2], bin_generations[-1], common_elems)
-            num_sorted_atoms -= duplicates
+        chains.append(curr_gen)
+        prev_bins = prev_bins + curr_gen
+
+        # PROBLEM: RIGHT NOW WE CAN ONLY HANDLE ONE COLLISION PER GENERATION
+        if not final_collision_found:
+            collision_found = False
+            for chain1_idx, bn1 in enumerate(curr_gen):
+                for chain2_idx, bn2 in enumerate(curr_gen):
+                    if chain2_idx > chain1_idx:
+                        if bins_are_neighbours(bn1, bn2, interact_mtrx):
+                            if num_chains > 2:
+                                # Merge chains
+                                print("bn1: " +str(bn1))
+                                print("bn2: " +str(bn2))
+                                chains = merge(chains, curr_gen_idx, chain1_idx, chain2_idx)
+                                num_chains -= 1
+                                # active_chains[chain2_idx] = False
+                                # print("active_chains: " + str(active_chains))
+                                print("chains: ")
+                                print_generations(chains)
+                                collision_found = True
+                            else:
+                                if not num_chains == 2:
+                                    print("WEIRD PROBLEM: num_chains should be 2")
+                                print("final_collision_found")
+                                final_collision_found = True
+                                final_chain_idxs = [chain1_idx, chain2_idx]
+                                gen_idx_of_last_collision = curr_gen_idx
+
+                    if collision_found or final_collision_found:
+                        break
+                if collision_found or final_collision_found:
+                    break
+
+        for bn in chains[-1]:
+            num_sorted_atoms += len(bn)
 
         if num_sorted_atoms >= num_atoms:
-            print("num_sorted_atoms >= num_atoms, num_sorted_atoms = " + str(num_sorted_atoms))
+            print("num_sorted_atoms = " + str(num_sorted_atoms))
             break
-        curr_generation += 1
+        curr_gen_idx += 1
 
-    # contiguous_bin_generations = []
-    # contiguous_bin_generations = create_subchain_tree(bin_generations, interact_mtrx)
-    # print("contiguous_bin_generations: ")
-    # print_generations(contiguous_bin_generations)
-    print("bin_generations: ")
-    print_generations(bin_generations)
 
+    print("chains: ")
+    print_generations(chains)
+
+    num_gen = len(chains)
+    for gen_idx in range(gen_idx_of_last_collision+1, num_gen):
+        print("gen_idx = " + str(gen_idx))
+
+        for step, chain_idx in enumerate(final_chain_idxs):
+            target_chain_idx = final_chain_idxs[(step+1)%2]
+            print("chain_idx = " + str(chain_idx))
+            print("target_chain_idx = " + str(target_chain_idx))
+            target_bin = chains[gen_idx_of_last_collision-step][target_chain_idx]
+            src_bin = chains[gen_idx][chain_idx]
+            print("target_bin = " + str(target_bin))
+            print("src_bin = " + str(src_bin))
+            np.append(target_bin, deepcopy(src_bin))
+            chains[gen_idx][chain_idx] = np.array([])
+
+
+
+    """
+    # In the "else" branch, we are merging dead ends
+    # (without merging, we would have a bin with three neighbours)
+    final_chain1 = []
+    for gen_idx, gen in enumerate(chains):
+        if gen_idx <= gen_idx_of_last_collision:
+            final_chain1.append(gen[final_chain_idxs[0]])
+        else:
+            print("Merging dead end. Moving atom with idx: " + str(gen[final_chain_idxs[0]]))
+            for atom_idx in gen[final_chain_idxs[0]]:
+                final_chain1[-1] = np.append(final_chain1[-1], [atom_idx])
+
+    """
+
+
+    print("chains: ")
+    print_generations(chains)
+
+
+
+
+
+
+    """
     collision_list = find_all_collisions(bin_generations, interact_mtrx)
     print("collision_list: " + str(collision_list))
 
@@ -196,6 +271,11 @@ def main():
 
 
     write_bins(final_chain, atom_positions, INPUT_FILE_NAME, OPEN_JMOL)
+
+
+
+    """
+
 
 
     """

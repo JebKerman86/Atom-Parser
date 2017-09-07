@@ -79,6 +79,9 @@ def remove_common_elems(prev_gen, curr_gen, common_elems_by_chain):
 
 
 def bins_are_neighbours(bin1, bin2, interact_mtrx):
+    """
+    Check if bin1 and bin2 contain interacting atoms, or have atoms in common.
+    """
 
     for atom_idx1 in bin1:
         for atom_idx2 in bin2:
@@ -86,6 +89,8 @@ def bins_are_neighbours(bin1, bin2, interact_mtrx):
             if interact_mtrx[atom_idx1, atom_idx2]:
                 return True
     return False
+
+
 
 
 def check_for_collisions(bin_generations, gen_idx1, gen_idx2, interact_mtrx):
@@ -260,6 +265,33 @@ def trim_until_collision(bin_generations, collision_list, chain_idx):
             break
         merge_chain_tip(bin_generations, chain_idx)
         tip_gen_idx = find_chain_tip_idx(bin_generations, chain_idx)
+
+
+
+
+
+def merge(chains, col_gen_idx, chain1_idx, chain2_idx):
+    
+    merged_chains = []
+    for gen in chains:
+        merged_chains.append(deepcopy(gen))
+
+    # merged_chains.append(col_gen)
+
+    for gen_idx in range(len(merged_chains)):
+        # print("gen_idx " + str(gen_idx))
+        merged_bin = np.concatenate(
+                (deepcopy(merged_chains[gen_idx][chain1_idx]),
+                 deepcopy(merged_chains[gen_idx][chain2_idx])),
+                 axis=0)
+        merged_bin = np.unique(merged_bin)
+        merged_bin = [int(x) for x in merged_bin]
+        print("merged_bin: ")
+        print(merged_bin)
+        merged_chains[gen_idx][chain1_idx] = merged_bin
+        merged_chains[gen_idx][chain2_idx] = np.array([])
+
+    return merged_chains
 
 
 def merge_chain(merged_bin_generations, bin_generations, collision_list, col_gen_idx, col_tuple):
