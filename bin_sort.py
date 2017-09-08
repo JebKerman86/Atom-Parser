@@ -52,7 +52,7 @@ def get_next_bins(curr_bins, prev_bins, interact_mtrx):
         bin_atoms = np.unique(bin_candidates)
         #print("bin_atoms: " + str(bin_atoms))
         next_bins.append(bin_atoms)
-        
+    
     return(next_bins)
 
 
@@ -284,10 +284,10 @@ def merge(chains, col_gen_idx, chain1_idx, chain2_idx):
                 (deepcopy(merged_chains[gen_idx][chain1_idx]),
                  deepcopy(merged_chains[gen_idx][chain2_idx])),
                  axis=0)
-        merged_bin = np.unique(merged_bin)
-        merged_bin = [int(x) for x in merged_bin]
+        merged_bin = np.unique(np.array(merged_bin))
+        # merged_bin = [int(x) for x in merged_bin]
         print("merged_bin: ")
-        print(merged_bin)
+        print([x+1 for x in merged_bin])
         merged_chains[gen_idx][chain1_idx] = merged_bin
         merged_chains[gen_idx][chain2_idx] = np.array([])
 
@@ -341,13 +341,20 @@ def glue_chains(chain1, chain2):
     """
     
     new_chain = []
-    
-    for bn in chain1:
+    last_bin = []
+
+    for gen_idx, bn in enumerate(chain1):
         new_chain.append(deepcopy(bn))
-        
+        if gen_idx+1 == len(chain1):
+            last_bin = new_chain[-1]
+    print(last_bin)
     for ii in range(1, len(chain2)+1):
         idx = len(chain2) - ii
-        new_chain.append(deepcopy(chain2[idx]))
+        bn = deepcopy(chain2[idx])
+        bn = [x for x in bn if x not in last_bin]
+        if len(bn) == 0:
+            continue
+        new_chain.append(bn)
         
     return new_chain
 

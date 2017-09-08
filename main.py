@@ -16,9 +16,9 @@ from utilities import find_duplicates, remove_all, print_generations
 
 LOAD_CACHE_DATA = False
 # Name without file ending:
-# INPUT_FILE_NAME = "caffeine"
+INPUT_FILE_NAME = "caffeine"
 # INPUT_FILE_NAME = "1d_kette"
-INPUT_FILE_NAME = "t-kreuzung_sackgasse"
+# INPUT_FILE_NAME = "t-kreuzung_sackgasse"
 # INPUT_FILE_NAME = "t-kreuzung_dick"
 # INPUT_FILE_NAME = "zno2wire"
 # INPUT_FILE_NAME = "SiNW"
@@ -78,7 +78,6 @@ def main():
     chains = []
     chains.append(contact_bins)
     # print("bin_generations" + str(bin_generations))
-
     num_chains = len(contacts)
     """
     active_chains = []
@@ -104,6 +103,9 @@ def main():
 
         chains.append(curr_gen)
         prev_bins = prev_bins + curr_gen
+        
+        print("\n Chains before merge step ")
+        print_generations(chains)
 
         # PROBLEM: RIGHT NOW WE CAN ONLY HANDLE ONE COLLISION PER GENERATION
         if not final_collision_found:
@@ -114,19 +116,20 @@ def main():
                         if bins_are_neighbours(bn1, bn2, interact_mtrx):
                             if num_chains > 2:
                                 # Merge chains
-                                print("bn1: " +str(bn1))
-                                print("bn2: " +str(bn2))
+                                print("bn1: " +str([x+1 for x in bn1]))
+                                print("bn2: " +str([x+1 for x in bn2]))
                                 chains = merge(chains, curr_gen_idx, chain1_idx, chain2_idx)
                                 num_chains -= 1
-                                # active_chains[chain2_idx] = False
-                                # print("active_chains: " + str(active_chains))
-                                print("chains: ")
+                                # CHECK IF OTHER CHAIN TIP CONTAINS ATOMS FROM MERGED CHAIN TIP
+                                # IF YES: DELETE ATOMS TO AVOID DUPLICATES
+                                all_chain_idxs = list(range(len(curr_gen)))
+                                print("\n Chains after merge step: ")
                                 print_generations(chains)
                                 collision_found = True
                             else:
                                 if not num_chains == 2:
                                     print("WEIRD PROBLEM: num_chains should be 2")
-                                print("final_collision_found")
+                                print("\n ---- final_collision_found! ---- \n")
                                 final_collision_found = True
                                 final_chain_idxs = [chain1_idx, chain2_idx]
                                 gen_idx_of_last_collision = curr_gen_idx
@@ -144,8 +147,8 @@ def main():
             break
         curr_gen_idx += 1
 
-
-    print("chains: ")
+    # print("chains" + str(chains))
+    print("\n Chain before culling dead ends: ")
     print_generations(chains)
     step = 0
     num_gen = len(chains)
@@ -165,6 +168,11 @@ def main():
             chains[gen_idx_of_last_collision-step][target_chain_idx] = target_bin
             chains[gen_idx][src_chain_idx] = np.array([])
         step += 1
+        
+    
+    # print("chains" + str(chains))
+    print("\n chain before glueing: ")
+    print_generations(chains)
 
     #WHY ARE SOME OF THE BINS IN THE CHAIN NOT NUMPY ARRAYS ?!?
 
@@ -175,8 +183,7 @@ def main():
             final_chain1.append(add_bin)
         else:
             break
-    
-    print(final_chain1)
+
 
 
     final_chain2 = []
@@ -186,28 +193,24 @@ def main():
             final_chain2.append(add_bin)
         else:
             break
-        
-    print_generations(final_chain2)
-
-    final_chain = glue_chains(final_chain1, final_chain1)
-
-    """
-    # In the "else" branch, we are merging dead ends
-    # (without merging, we would have a bin with three neighbours)
-    final_chain1 = []
-    for gen_idx, gen in enumerate(chains):
-        if gen_idx <= gen_idx_of_last_collision:
-            final_chain1.append(gen[final_chain_idxs[0]])
-        else:
-            print("Merging dead end. Moving atom with idx: " + str(gen[final_chain_idxs[0]]))
-            for atom_idx in gen[final_chain_idxs[0]]:
-                final_chain1[-1] = np.append(final_chain1[-1], [atom_idx])
-
-    """
 
 
-    print("final_chain: ")
-    print_generations(final_chain)
+    final_chain = glue_chains(final_chain1, final_chain2)
+
+
+    print("\nfinal_chain: ")
+    
+    line_str = ""
+    for bn in final_chain:
+        line_str = line_str + str([x+1 for x in bn])
+        line_str = line_str + "\n"
+
+    print(line_str)
+
+
+
+    write_bins(final_chain, atom_positions, INPUT_FILE_NAME, OPEN_JMOL)
+
 
 
 
@@ -282,21 +285,6 @@ def main():
 
 
     final_chain = glue_chains(final_chain1, final_chain2)
-    
-    # print(final_chain)
-    
-    print("\nfinal_chain: ")
-    
-    line_str = ""
-    for bn in final_chain:
-        line_str = line_str + str(bn)
-        line_str = line_str + "\n"
-
-    print(line_str)
-
-
-
-    write_bins(final_chain, atom_positions, INPUT_FILE_NAME, OPEN_JMOL)
 
 
 

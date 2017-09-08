@@ -78,7 +78,7 @@ def print_generations(bin_generations):
         line_str = ""
         for bn in gen:
             #print("bn: " + str(bn))
-            line_str = line_str + str(bn)
+            line_str = line_str + str([x+1 for x in bn])
             line_str = line_str + " -- "
         print(line_str)
 
