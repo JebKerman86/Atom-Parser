@@ -11,16 +11,17 @@ from copy import deepcopy
 from prep_input import prep_data
 from file_io import chache_data, load_data, write_bins, read_xyz_file, read_transport_file
 from bin_sort import get_contact_bins, get_next_bins, remove_common_elems, \
-                     find_all_collisions, merge_chain, glue_chains, bins_are_neighbours, merge
+                     find_all_collisions, merge_chain, glue_chains, bins_are_neighbours, merge, remove_duplicates_from_tips, test_solution
 from utilities import find_duplicates, remove_all, print_generations
 
 LOAD_CACHE_DATA = False
 # Name without file ending:
-INPUT_FILE_NAME = "caffeine"
+# INPUT_FILE_NAME = "caffeine"
+# INPUT_FILE_NAME = "caffeine_no_simultaneous_collision"
 # INPUT_FILE_NAME = "1d_kette"
 # INPUT_FILE_NAME = "t-kreuzung_sackgasse"
 # INPUT_FILE_NAME = "t-kreuzung_dick"
-# INPUT_FILE_NAME = "zno2wire"
+INPUT_FILE_NAME = "zno2wire"
 # INPUT_FILE_NAME = "SiNW"
 OPEN_JMOL = True
 
@@ -120,9 +121,26 @@ def main():
                                 print("bn2: " +str([x+1 for x in bn2]))
                                 chains = merge(chains, curr_gen_idx, chain1_idx, chain2_idx)
                                 num_chains -= 1
+                                
+                                remove_duplicates_from_tips(chains)
+                                
                                 # CHECK IF OTHER CHAIN TIP CONTAINS ATOMS FROM MERGED CHAIN TIP
                                 # IF YES: DELETE ATOMS TO AVOID DUPLICATES
+                                """
                                 all_chain_idxs = list(range(len(curr_gen)))
+                                print("all_chain_idxs" + str(all_chain_idxs))
+                                print("chain1_idx = " + str(chain1_idx))
+                                print("chain2_idx = " + str(chain2_idx))
+                                merged_chain_idx = chain1_idx
+                                not_merged_chain_idxs = [x for x in all_chain_idxs if not x in [chain1_idx, chain2_idx]]
+                                print("merged_chain_idx: " + str(merged_chain_idx))
+                                merged_chain_tip = chains[curr_gen_idx][merged_chain_idx]
+                                print("not_merged_chain_idxs" + str(not_merged_chain_idxs))
+                                for not_merged_chain_idx in not_merged_chain_idxs:
+                                    bn = chains[curr_gen_idx][not_merged_chain_idx]
+                                    bn = np.array([x for x in bn if not x in merged_chain_tip])
+                                    chains[curr_gen_idx][not_merged_chain_idx] = bn
+                                """
                                 print("\n Chains after merge step: ")
                                 print_generations(chains)
                                 collision_found = True
@@ -133,6 +151,7 @@ def main():
                                 final_collision_found = True
                                 final_chain_idxs = [chain1_idx, chain2_idx]
                                 gen_idx_of_last_collision = curr_gen_idx
+                                remove_duplicates_from_tips(chains)
 
                     if collision_found or final_collision_found:
                         break
@@ -140,7 +159,7 @@ def main():
                     break
 
         for bn in chains[-1]:
-            num_sorted_atoms += len(bn)
+            num_sorted_atoms += len(np.unique(bn))
 
         if num_sorted_atoms >= num_atoms:
             print("num_sorted_atoms = " + str(num_sorted_atoms))
@@ -169,12 +188,12 @@ def main():
             chains[gen_idx][src_chain_idx] = np.array([])
         step += 1
         
-    
-    # print("chains" + str(chains))
-    print("\n chain before glueing: ")
-    print_generations(chains)
 
-    #WHY ARE SOME OF THE BINS IN THE CHAIN NOT NUMPY ARRAYS ?!?
+
+    remove_duplicates_from_tips(chains)
+    
+    print("\n chain after removing duplicates from tips, and before glueing: ")
+    print_generations(chains)
 
     final_chain1 = []
     for gen in chains:
@@ -207,8 +226,8 @@ def main():
 
     print(line_str)
 
-
-
+    is_solution = test_solution(final_chain, interact_mtrx)
+    print("is_solution: " + str(is_solution))
     write_bins(final_chain, atom_positions, INPUT_FILE_NAME, OPEN_JMOL)
 
 

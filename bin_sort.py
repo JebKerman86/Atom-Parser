@@ -82,9 +82,15 @@ def bins_are_neighbours(bin1, bin2, interact_mtrx):
     """
     Check if bin1 and bin2 contain interacting atoms, or have atoms in common.
     """
-
+    max_atom_idx = len(interact_mtrx[:,0])-1
     for atom_idx1 in bin1:
+        if atom_idx1 > max_atom_idx:
+            print("In bins_are_neighbours: atom_idx out of range!")
+            continue
         for atom_idx2 in bin2:
+            if atom_idx2 > max_atom_idx:
+                print("In bins_are_neighbours: atom_idx out of range!")
+                continue
             #if atom_idx2 > atom_idx1:   (????????)
             if interact_mtrx[atom_idx1, atom_idx2]:
                 return True
@@ -333,32 +339,84 @@ def merge_chain(merged_bin_generations, bin_generations, collision_list, col_gen
     # print(merged_bin_generations)
 
 
+def remove_duplicates_from_tips(chains):
+    tips = deepcopy(chains[-1])
+    print(tips)
+    existing_atoms_idxs = []
+    
+    for chain_idx, bn in enumerate(tips):
+        for atom_idx in bn:
+            if not atom_idx in existing_atoms_idxs:
+                existing_atoms_idxs.append(atom_idx)
+            else:
+                chains[-1][chain_idx] = np.array([x for x in bn if not x == atom_idx])
+                # print("chains[-1][chain_idx]: " + str(chains[-1][chain_idx]))
+
 
 def glue_chains(chain1, chain2):
     """
     Glue dangling ends of two chains together:
     [0 --> chain1  -->  -1]  +  [-1  -->  chain2  -->  0]
     """
-    
+    # print("In glue_chains: \n")
     new_chain = []
-    last_bin = []
 
     for gen_idx, bn in enumerate(chain1):
         new_chain.append(deepcopy(bn))
-        if gen_idx+1 == len(chain1):
-            last_bin = new_chain[-1]
-    print(last_bin)
+
+    # print("new_chain: "+ str([x+1 for x in new_chain]))
+    
     for ii in range(1, len(chain2)+1):
         idx = len(chain2) - ii
         bn = deepcopy(chain2[idx])
-        bn = [x for x in bn if x not in last_bin]
-        if len(bn) == 0:
-            continue
+        # print("bn" + str([x+1 for x in bn]))
+        if ii == 1:
+            bn = np.append(bn, deepcopy(new_chain[-1]))
+            # print("bn after merge" + str([x+1 for x in bn]))
+            new_chain = new_chain[0:-1]
+
         new_chain.append(bn)
         
     return new_chain
 
 
+
+def test_solution(final_chain, interact_mtrx):
+
+    # Check whether all bins have two neighbour bins
+    num_neighbours = [0]*len(final_chain)
+    # print("num_neighbours: " + str(num_neighbours))
+    for gen_idx1, gen1 in enumerate(final_chain):
+        for gen_idx2, gen2 in enumerate(final_chain):
+            if not gen_idx2 == gen_idx1:
+                if bins_are_neighbours(gen1, gen2, interact_mtrx):
+                    num_neighbours[gen_idx1] += 1
+    print("num_neighbours: " + str(num_neighbours))
+    for num_n in num_neighbours:
+        if num_n > 2:
+            print("At least one bin has more than two neighbours.")
+            print("---> BAD SOLUTION <---")
+            return False
+    
+    #Check whether the atom_idx from all_atom_idxs exist exactly once
+    #in the final_chain, and no other atom_idx are present in the final_chain.
+    all_atom_idxs = list(range(len(interact_mtrx[:,0])))
+    for gen in final_chain:
+        for atom_idx in gen:
+            if atom_idx in all_atom_idxs:
+                all_atom_idxs.remove(atom_idx)
+            else:
+                print("Either duplicate atom_idx, or atom_idx not part of original molecule found.")
+                print("---> BAD SOLUTION <---")
+                return False
+    if not len(all_atom_idxs) == 0:
+        print("At least one atom_idx from original molecule was not sorted into final_chain:")
+        print("unsorted atom_idx: " + str([x for x in all_atom_idxs]))
+        print("---> BAD SOLUTION <---")
+        return False
+
+    print("Solution check passed!")
+    return True
 
 """
 def find_contacts_to_keep(bin_generations):
