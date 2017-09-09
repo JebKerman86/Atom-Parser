@@ -341,7 +341,7 @@ def merge_chain(merged_bin_generations, bin_generations, collision_list, col_gen
 
 def remove_duplicates_from_tips(chains):
     tips = deepcopy(chains[-1])
-    print(tips)
+
     existing_atoms_idxs = []
     
     for chain_idx, bn in enumerate(tips):
@@ -353,7 +353,7 @@ def remove_duplicates_from_tips(chains):
                 # print("chains[-1][chain_idx]: " + str(chains[-1][chain_idx]))
 
 
-def glue_chains(chain1, chain2):
+def glue_chains(chain1, chain2, interact_mtrx):
     """
     Glue dangling ends of two chains together:
     [0 --> chain1  -->  -1]  +  [-1  -->  chain2  -->  0]
@@ -369,11 +369,20 @@ def glue_chains(chain1, chain2):
     for ii in range(1, len(chain2)+1):
         idx = len(chain2) - ii
         bn = deepcopy(chain2[idx])
+
         # print("bn" + str([x+1 for x in bn]))
         if ii == 1:
-            bn = np.append(bn, deepcopy(new_chain[-1]))
-            # print("bn after merge" + str([x+1 for x in bn]))
-            new_chain = new_chain[0:-1]
+            print("chain1[-2]" + str([x+1 for x in chain1[-2]]))
+            print("chain1[-2]" + str([x+1 for x in chain2[idx-1]]))
+            
+            if bins_are_neighbours(chain1[-1], chain2[idx-1], interact_mtrx) or bins_are_neighbours(chain1[-2], chain2[idx], interact_mtrx):
+                print("Merge ends.")
+                bn = np.append(bn, deepcopy(new_chain[-1]))
+                # print("bn after merge" + str([x+1 for x in bn]))
+                new_chain = new_chain[0:-1]
+            else:
+                print("Don't merge ends.")
+
 
         new_chain.append(bn)
         
@@ -401,6 +410,7 @@ def test_solution(final_chain, interact_mtrx):
     #Check whether the atom_idx from all_atom_idxs exist exactly once
     #in the final_chain, and no other atom_idx are present in the final_chain.
     all_atom_idxs = list(range(len(interact_mtrx[:,0])))
+
     for gen in final_chain:
         for atom_idx in gen:
             if atom_idx in all_atom_idxs:
@@ -411,7 +421,7 @@ def test_solution(final_chain, interact_mtrx):
                 return False
     if not len(all_atom_idxs) == 0:
         print("At least one atom_idx from original molecule was not sorted into final_chain:")
-        print("unsorted atom_idx: " + str([x for x in all_atom_idxs]))
+        print("unsorted atom_idx: " + str([x+1 for x in all_atom_idxs]))
         print("---> BAD SOLUTION <---")
         return False
 

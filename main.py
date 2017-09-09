@@ -17,11 +17,11 @@ from utilities import find_duplicates, remove_all, print_generations
 LOAD_CACHE_DATA = False
 # Name without file ending:
 # INPUT_FILE_NAME = "caffeine"
-# INPUT_FILE_NAME = "caffeine_no_simultaneous_collision"
+INPUT_FILE_NAME = "caffeine_no_simultaneous_collision"
 # INPUT_FILE_NAME = "1d_kette"
 # INPUT_FILE_NAME = "t-kreuzung_sackgasse"
 # INPUT_FILE_NAME = "t-kreuzung_dick"
-INPUT_FILE_NAME = "zno2wire"
+# INPUT_FILE_NAME = "zno2wire"
 # INPUT_FILE_NAME = "SiNW"
 OPEN_JMOL = True
 
@@ -61,7 +61,7 @@ def main():
 
     device = np_region_list[0]
     contacts = np_region_list[1:]
-    # print("contacts: " + str(contacts))
+    print("contacts: " + str(contacts))
     contact_bins = get_contact_bins(device, contacts, interact_mtrx)
     prev_bins = list.copy(contacts)
     #print("prev_bins" + str(prev_bins))
@@ -202,8 +202,12 @@ def main():
             final_chain1.append(add_bin)
         else:
             break
-
-
+    
+    cntct_bin1 = deepcopy(final_chain1[0])
+    for atom_idx in contacts[final_chain_idxs[0]]:
+        if atom_idx not in final_chain1[0]:
+            cntct_bin1 = np.append(cntct_bin1, atom_idx)
+    final_chain1[0] = deepcopy(cntct_bin1)
 
     final_chain2 = []
     for gen in chains:
@@ -213,8 +217,16 @@ def main():
         else:
             break
 
+    cntct_bin2 = deepcopy(final_chain2[0])
+    for atom_idx in contacts[final_chain_idxs[1]]:
+        if atom_idx not in final_chain2[0]:
+            cntct_bin2 = np.append(cntct_bin2, atom_idx)
+    final_chain2[0] = deepcopy(cntct_bin2)
 
-    final_chain = glue_chains(final_chain1, final_chain2)
+    final_chain = glue_chains(final_chain1, final_chain2, interact_mtrx)
+    
+
+    
 
 
     print("\nfinal_chain: ")
@@ -230,7 +242,11 @@ def main():
     print("is_solution: " + str(is_solution))
     write_bins(final_chain, atom_positions, INPUT_FILE_NAME, OPEN_JMOL)
 
+    """
+    ToDo:
+        Fix caffeine (problem: program breaks if there are two simultaneous collisions, since no final collision recognized)
 
+    """
 
 
 
