@@ -12,7 +12,7 @@ from prep_input import prep_data
 from file_io import chache_data, load_data, write_bins, read_xyz_file, read_transport_file
 from bin_sort import get_contact_bins, get_next_bins, remove_common_elems, \
                      find_all_collisions, merge_chain, glue_chains, bins_are_neighbours, merge, remove_duplicates_from_tips, test_solution
-from utilities import find_duplicates, remove_all, print_generations
+from utilities import remove_all, print_generations
 
 LOAD_CACHE_DATA = False
 # Name without file ending:
@@ -224,9 +224,6 @@ def main():
     final_chain2[0] = deepcopy(cntct_bin2)
 
     final_chain = glue_chains(final_chain1, final_chain2, interact_mtrx)
-    
-
-    
 
 
     print("\nfinal_chain: ")
@@ -250,96 +247,7 @@ def main():
 
 
 
-
-
     """
-    collision_list = find_all_collisions(bin_generations, interact_mtrx)
-    print("collision_list: " + str(collision_list))
-
-    
-    # The last collision between chains is the collision between the longest
-    # two chains. These are the chains we want to keep.
-
-    last_col_list = collision_list[-1][1]
-    if last_col_list == []:
-        print("No collisions between chains detected (since last_col_list == [])")
-        print("Something is weird. Exiting...")
-
-    if len(last_col_list) > 1:
-        print("Last collision is not unique. Don't know how to handle this yet.")
-        print("Something is weird. Exiting...")
-
-
-    last_col = last_col_list[0]
-    keep_chains = (min(last_col),max(last_col))
-    print("keep_chains: ")
-    print(keep_chains)
-
-
-    bin_generations_merged = []
-    for gen in bin_generations:
-        bin_generations_merged.append(deepcopy(gen))
-        
-    # Merge all colliding chains that are not collisions between
-    # the two keep_chains (ie. the last collision)
-
-    # This leaves out the last collision
-    for collisions in collision_list[0:-1]:
-        for col_tuple in collisions[1]:
-            col_gen_idx = collisions[0]
-            merge_chain(bin_generations_merged, bin_generations, collision_list, col_gen_idx, col_tuple)
-
-
-    print("bin_generations_merged: ")
-    print_generations(bin_generations_merged)
-
-    gen_idx_of_last_collision = collision_list[-1][0]
-    print("gen_idx_of_last_collision: " + str(gen_idx_of_last_collision))
-
-    # In the "else" branch, we are merging dead ends
-    # (without merging, we would have a bin with three neighbours)
-    final_chain1 = []
-    for gen_idx, gen in enumerate(bin_generations_merged):
-        if gen_idx <= gen_idx_of_last_collision:
-            final_chain1.append(gen[keep_chains[0]])
-        else:
-            print("Merging dead end. Moving atom with idx: " + str(gen[keep_chains[0]]))
-            for atom_idx in gen[keep_chains[0]]:
-                final_chain1[-1] = np.append(final_chain1[-1], [atom_idx])
-
-
-    final_chain2 = []
-    for gen_idx, gen in enumerate(bin_generations_merged):
-        if gen_idx <= gen_idx_of_last_collision:
-            final_chain2.append(gen[keep_chains[1]])
-        else:
-            print("Merging dead end. Moving atom with idx: " + str(gen[keep_chains[1]]))
-            for atom_idx in gen[keep_chains[1]]:
-                final_chain2[-1] = np.append(final_chain2[-1], [atom_idx])
-
-
-
-    final_chain = glue_chains(final_chain1, final_chain2)
-
-
-
-    """
-
-
-
-    """
-    Problem:
-        When chains collide, the tips of the chains can end up in
-        different generations (because one of the chains snatches up
-        the last atoms between the chains)
-        In this case, collisions are not detected at the moment.
-        Possible solutions:
-            - Make sure that tips of chains at collision point are always
-             in the same generation?
-             - Or maybe check for collisions between generations?
-    """
-    """
-    ToDo:
           Algorithm: Simultaneously, from all contacts move into device.
                      Partition such that all new partition atoms are in
                      contact with previous partition

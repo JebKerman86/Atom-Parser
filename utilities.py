@@ -11,49 +11,6 @@ from collections import Counter
 
 # -----------------------------------------------------------------------------
 
-"""
-def common_elements(list1, list2):
-    return list(set(list1) & set(list2))
-"""
-
-
-
-
-def find_duplicates(input_list):
-    commons_found = False
-    common_elems = [[]]*len(input_list)
-    #print("input_list" + str(input_list))
-    for idx1, elem1 in enumerate(input_list):
-        for idx2, elem2 in enumerate(input_list):
-            #print("elem1: " + str(elem1))
-            #print("elem2: " + str(elem2))
-            if not idx1 == idx2:
-                #print("commons: " + str(list(set(elem1) & set(elem2))) )
-                new_commons = list(set(elem1) & set(elem2))
-                common_elems[idx1] = common_elems[idx1] + new_commons
-                if not common_elems[idx1] == []:
-                    commons_found = True
-                    #print("commons_found: " + str(commons_found))
-    
-    unique_common_elems = []
-    for bn in common_elems:
-        np_bn = np.array(bn)
-        np_bn = np.unique(np_bn)
-        unique_common_elems.append(np_bn.tolist())
-    # print(unique_common_elems)
-    combined_bns = []
-    for bn in unique_common_elems:
-        combined_bns += bn
-    # print(combined_bns)
-    cnt = Counter(combined_bns)
-    # print(cnt)
-    duplicates = 0
-    for entry in cnt:
-        duplicates += cnt[entry] - 1
-    
-    return (duplicates, common_elems)
-
-
 def remove_all(input_list, elem_to_remove):
     """
     Returns a copy of "input_list" in which all instances of "elem_to_remove"
