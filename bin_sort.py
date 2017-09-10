@@ -277,7 +277,9 @@ def trim_until_collision(bin_generations, collision_list, chain_idx):
 
 
 def merge(chains, col_gen_idx, chain1_idx, chain2_idx):
-    
+    """
+    Merge chain2 into chain1, starting at col_gen_idx
+    """
     merged_chains = []
     for gen in chains:
         merged_chains.append(deepcopy(gen))
@@ -433,7 +435,8 @@ def test_solution(final_chain, interact_mtrx):
             if atom_idx in all_atom_idxs:
                 all_atom_idxs.remove(atom_idx)
             else:
-                print("Either duplicate atom_idx, or atom_idx not part of original molecule found.")
+                print("Either duplicate atom_idx, or atom_idx not part of original molecule found:")
+                print("atom_idx: " + str(atom_idx+1))
                 print("---> BAD SOLUTION <---")
                 return False
     if not len(all_atom_idxs) == 0:

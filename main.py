@@ -5,6 +5,7 @@ Created on Tue Aug  8 16:35:15 2017
 @author: Benjamin
 """
 
+import sys
 import numpy as np
 from copy import deepcopy
 
@@ -16,11 +17,12 @@ from utilities import remove_all, print_generations, count_atoms
 
 LOAD_CACHE_DATA = False
 # Name without file ending:
-INPUT_FILE_NAME = "caffeine"
+# INPUT_FILE_NAME = "caffeine"
 # INPUT_FILE_NAME = "caffeine_no_simultaneous_collision"
 # INPUT_FILE_NAME = "1d_kette"
 # INPUT_FILE_NAME = "t-kreuzung_sackgasse"
 # INPUT_FILE_NAME = "t-kreuzung_dick"
+INPUT_FILE_NAME = "kompliziert"
 # INPUT_FILE_NAME = "zno2wire"
 # INPUT_FILE_NAME = "SiNW"
 OPEN_JMOL = True
@@ -108,7 +110,7 @@ def main():
                                 # Duplicates have to be removed AFTER collision recognition,
                                 # since otherwise this could prevent finding collisions
                                 # remove_duplicates_from_tips(chains, chain1_idx, chain2_idx)
-                                remove_duplicates_from_tips(chains, chain1_idx, chain2_idx)
+                                # remove_duplicates_from_tips(chains, chain1_idx, chain2_idx)
                                 collisions_found.append((chain1_idx,chain2_idx))
                                 print("collisions_found: " + str(collisions_found))
                                 num_chains -= 1
@@ -122,38 +124,51 @@ def main():
                                 final_chain_idxs = [chain1_idx, chain2_idx]
                                 print("final_collision: " + str(final_chain_idxs))
                                 gen_idx_of_last_collision = curr_gen_idx
-                                remove_duplicates_from_all_tips(chains)
+                                # remove_duplicates_from_all_tips(chains)
 
                     if final_collision_found:
                         break
                 if final_collision_found:
                     break
 
-
         for col_tuple in collisions_found:
-            chain1_idx = col_tuple[0]
-            chain2_idx = col_tuple[1]
+            # Merge from src_chain_idx into target_chain_idx
+            src_chain_idx = col_tuple[0]
+            target_chain_idx = col_tuple[1]
+
+            if col_tuple[0] in final_chain_idxs and col_tuple[1] in final_chain_idxs:
+                sys.exit("FATAL ERROR: Should never merge the two final chains into eachother.")
+
+            # Make sure we are merging into the final chain.
+            # If not, swap src_chain_idx with target_chain_idx.
+            if col_tuple[0] in final_chain_idxs:
+                src_chain_idx = col_tuple[1]
+                target_chain_idx = col_tuple[0]
+
             # Merge chains
             print("Merge chain_idxs:" + str(col_tuple))
-            print("bn1: " +str([x+1 for x in curr_gen[chain1_idx]]))
-            print("bn2: " +str([x+1 for x in curr_gen[chain2_idx]]))
+            print("src_chain bin: " +str([x+1 for x in curr_gen[src_chain_idx]]))
+            print("target_chain bin: " +str([x+1 for x in curr_gen[target_chain_idx]]))
+
             ########################################
-            # PROBLEM: ALWAYS MERGE INTO THE CHAINS THAT IS IN final_chain_idxs !!!
             # CONSIDER: FOR MULTIPLE COLLISIONS, TRY TO MERGE SMALLER CHAINS TOGETHER FIRST
             ########################################
-            chains = merge(chains, curr_gen_idx, chain1_idx, chain2_idx)
+            remove_duplicates_from_tips(chains, target_chain_idx, src_chain_idx)
+            chains = merge(chains, curr_gen_idx, target_chain_idx, src_chain_idx)
             print("\n Chains after merge step: ")
             print_generations(chains)
 
-
+        remove_duplicates_from_all_tips(chains)
         num_sorted_atoms = count_atoms(chains) + num_unlisted_contact_atoms
         print("num_sorted_atoms: " + str(num_sorted_atoms))
         if num_sorted_atoms >= num_atoms:
-            print("num_sorted_atoms = " + str(num_sorted_atoms))
+            print("All atoms sorted.")
             break
         curr_gen_idx += 1
 
-    # print("chains" + str(chains))
+
+    if not final_collision_found:
+        sys.exit("FATAL ERROR: No final collision found, don't know which chains to keep")
     print("\n Chain before culling dead ends: ")
     print_generations(chains)
     step = 0
@@ -216,7 +231,7 @@ def main():
     
     line_str = ""
     for bn in final_chain:
-        line_str = line_str + str([x+1 for x in bn])
+        line_str = line_str + str([x for x in bn])
         line_str = line_str + "\n"
 
     print(line_str)
@@ -224,12 +239,6 @@ def main():
     is_solution = test_solution(final_chain, interact_mtrx)
     print("is_solution: " + str(is_solution))
     write_bins(final_chain, atom_positions, INPUT_FILE_NAME, OPEN_JMOL)
-
-    """
-    ToDo:
-        Fix caffeine (problem: program breaks if there are two simultaneous collisions, since no final collision recognized)
-
-    """
 
 
 
