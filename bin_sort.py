@@ -8,8 +8,6 @@ Created on Mon Aug 14 15:11:13 2017
 import numpy as np
 from copy import deepcopy
 
-from utilities import remove_all, print_generations
-
 def get_contact_bins(device, contacts, interact_mtrx):
 
     contact_starter_atom_list = []
@@ -19,12 +17,11 @@ def get_contact_bins(device, contacts, interact_mtrx):
         for index_contact in contact:
             for index_device in device:
                 if interact_mtrx[index_contact, index_device]:
-                    if not (index_contact in contact_edge_list):
+                    if not index_contact in contact_edge_list:
                         contact_edge_list.append(index_contact)
         contact_starter_atom_list.append(np.array(contact_edge_list))
 
     return contact_starter_atom_list
-
 
 
 def get_next_bins(curr_bins, prev_bins, interact_mtrx):
@@ -42,7 +39,7 @@ def get_next_bins(curr_bins, prev_bins, interact_mtrx):
             # print(interact_mtrx[atom_idx, :])
             bin_add_candidates = atoms[interact_mtrx[atom_idx, :]]
             for prev_bin in prev_bins:
-                #print("prev_bin" + str(prev_bin))
+                # print("prev_bin" + str(prev_bin))
                 bin_add_candidates = [x for x in bin_add_candidates if x not in prev_bin]
                 bin_add_candidates = np.array(bin_add_candidates)
             bin_candidates = np.append(bin_candidates, bin_add_candidates)
@@ -50,39 +47,17 @@ def get_next_bins(curr_bins, prev_bins, interact_mtrx):
             # print("bin_add_candidates" + str(bin_add_candidates))
             # print("bin_candidates" + str(bin_candidates))
         bin_atoms = np.unique(bin_candidates)
-        #print("bin_atoms: " + str(bin_atoms))
+        # print("bin_atoms: " + str(bin_atoms))
         next_bins.append(bin_atoms)
-    
-    return(next_bins)
 
-
-def remove_common_elems(prev_gen, curr_gen, common_elems_by_chain):
-    """
-    Takes the bins at tips of each contact chain and ensures that there are no
-    duplicate atoms in these bins. The atom in the contact chain with
-    the smallest index is kept.
-    """
-    atoms_to_delete = []
-    for chain_idx, common_atoms in enumerate(common_elems_by_chain):
-        for idx, atom_idx in enumerate(common_atoms):
-            if not atom_idx in atoms_to_delete:
-                atoms_to_delete.append(atom_idx)
-                print("add atom_idx: " + str(atom_idx))
-                prev_gen[chain_idx] = \
-                     np.append(prev_gen[chain_idx], np.array([atom_idx]) )
-
-        for atom_idx in atoms_to_delete:
-            # print("elems_to_delete: " + str(elems_to_delete))
-            curr_gen[chain_idx] =  \
-                remove_all(curr_gen[chain_idx], atom_idx)
-
+    return next_bins
 
 
 def bins_are_neighbours(bin1, bin2, interact_mtrx):
     """
     Check if bin1 and bin2 contain interacting atoms, or have atoms in common.
     """
-    max_atom_idx = len(interact_mtrx[:,0])-1
+    max_atom_idx = len(interact_mtrx[:, 0])-1
     for atom_idx1 in bin1:
         if atom_idx1 > max_atom_idx:
             print("In bins_are_neighbours: atom_idx out of range!")
@@ -91,189 +66,43 @@ def bins_are_neighbours(bin1, bin2, interact_mtrx):
             if atom_idx2 > max_atom_idx:
                 print("In bins_are_neighbours: atom_idx out of range!")
                 continue
-            #if atom_idx2 > atom_idx1:   (????????)
             if interact_mtrx[atom_idx1, atom_idx2]:
                 return True
     return False
 
 
+"""
+Tried to export this part of the program from main, but something didn't work
+"""
+def check_gen_for_collisions(curr_gen, curr_gen_idx, interact_mtrx, num_chains):
+    collisions_found = []
+    final_chain_idxs = []
+    final_collision_found = False
+    gen_idx_of_last_collision = -1
+    for chain1_idx, bn1 in enumerate(curr_gen):
+        for chain2_idx, bn2 in enumerate(curr_gen):
+            if chain2_idx > chain1_idx:
+                if bins_are_neighbours(bn1, bn2, interact_mtrx):
+                    if num_chains > 2:
+                        collisions_found.append((chain1_idx, chain2_idx))
+                        print("collisions_found: " + str(collisions_found))
+                        num_chains -= 1
+                        print("num_chains = " + str(num_chains))
 
-
-def check_for_collisions(bin_generations, gen_idx1, gen_idx2, interact_mtrx):
-    # print("Entering check_for_collisions...")
-    # print("gen_idx1 = " + str(gen_idx1))
-    # print("gen_idx2 = " + str(gen_idx2))
-    
-    gen1 = bin_generations[gen_idx1]
-    gen2 = bin_generations[gen_idx2]
-    # print("gen1: " + str(gen1))
-    # print("gen2" + str(gen2))
-    
-    collisions = []
-    for bin_idx1, bin1 in enumerate(gen1):
-        for bin_idx2, bin2 in enumerate(gen2):
-            if bin_idx2 > bin_idx1:
-                col = bins_are_neighbours(bin1, bin2,interact_mtrx)
-                if col:
-                    print("collision detected: ")
-                    print("bin1" + str(bin1))
-                    print("bin2" + str(bin2))
-                    collisions.append([(gen_idx1, gen_idx2),(bin_idx1, bin_idx2)])
-                    
-    # print("Exiting check_for_collisions.")
-    if len(collisions) == 0:
-        return (False, [(-1,-1)])
-    else:
-        return (True, collisions)
-
-
-
-def check_generation_for_collisions(bin_generations, gen_idx, interact_mtrx):
-    
-    curr_generation = bin_generations[gen_idx]
-    if gen_idx-1 > 0:
-        prev_generation = bin_generations[gen_idx-1]
-
-    # Return list of collision tuples, since there can be multiple collisions
-    # in a generation
-    collisions = []
-    for bin_idx1, bin1 in enumerate(curr_generation):
-        for bin_idx2, bin2 in enumerate(curr_generation):
-            if bin_idx2 > bin_idx1:
-                if (not bin1 == []) and (not bin2 == []):
-                    col = bins_are_neighbours(bin1, bin2,interact_mtrx)
-                if bin1 == []:
-                    print("check prev gen")
-                    col = bins_are_neighbours(prev_generation[bin_idx1], bin2,interact_mtrx)
-                if bin2 == []:
-                    print("check prev gen")
-                    col = bins_are_neighbours(bin1, prev_generation[bin_idx2],interact_mtrx)
-                if col:
-                    print("collision detected: ")
-                    print("bin1" + str(bin1))
-                    print("bin2" + str(bin2))
-                    collisions.append((bin_idx1, bin_idx2))
-                    
-    if len(collisions) == 0:
-        return (False, [(-1,-1)])
-    else:
-        return (True, collisions)
-
-
-def find_all_collisions(bin_generations, interact_mtrx):
-    
-    print("Entering find_all_collisions... ")
-    # col_list is list of tuples:
-    # [ (gen_idx1, [(chain_idx1,chain_idx2), (chain_idx1,chain_idx2)]),
-    #   (gen_idx2, [(chain_idx1, chain_idx2)]) ]
-    
-    intergen_col_list = []
-    for gen_idx1, gen1 in enumerate(bin_generations):
-        for gen_idx2, gen2 in enumerate(bin_generations):
-            if gen_idx2 >= gen_idx1:
-                col = check_for_collisions(bin_generations, gen_idx1, gen_idx2, interact_mtrx)
-                if col[0]:
-                    intergen_col_list.append(col)
-    
-    
-    print("intergen_col_list: ")
-    print(intergen_col_list)
-    
-    col_list = []
-    num_chains = len(bin_generations[0])
-    all_chain_idxs = list(range(num_chains))
-    # "-1" in uncollided_chain_idxs is a dummy value that allows while loop to begin
-    uncollided_chain_idxs = [-1]
-    iterations = 1
-    
-    
-    """
-    DO I NEED THIS WHILE LOOP ?????!!?
-    """
-    """
-    while not uncollided_chain_idxs == [] and iterations < 10:
-        iterations += 1
-        col_list = []
-    """
-
-    for gen_idx in range(len(bin_generations)):
-        col = check_generation_for_collisions(bin_generations, gen_idx, interact_mtrx)
-        # print("gen_idx = " + str(gen_idx) + "  /  col = " + str(col))
-        if col[0]:
-            col_list.append((gen_idx, col[1]))
-    """
-        # Figure out whether any chains have NOT collided with eachother
-        collided_chain_idxs = []
-        print("col_list" + str(col_list))
-        for col in col_list:
-            col_tuple = col[1][0]
-            print("col_tuple: " + str(col_tuple))
-            collided_chain_idxs.append(col_tuple[0])
-            collided_chain_idxs.append(col_tuple[1])
-        print("collided_chain_idxs: " + str(collided_chain_idxs))
-    
-        uncollided_chain_idxs = []
-        for chain_idx in all_chain_idxs:
-            if not chain_idx in collided_chain_idxs:
-                uncollided_chain_idxs.append(chain_idx)
-        print("uncollided_chain_idxs: " + str(uncollided_chain_idxs))
-        
-        # For all uncollided chains, merge the last bin into the second to
-        # last bin.
-        for chain_idx in uncollided_chain_idxs:
-            merge_chain_tip(bin_generations, chain_idx)
-
-        print("In find_all_collisions: bin_generations: ")
-        print_generations(bin_generations)
-    """
-    print("Exiting find_all_collisions... ")
-    return col_list
-
-
-def find_chain_tip_idx(bin_generations, chain_idx):
-    for gen_idx, gen in enumerate(bin_generations):
-        bn = gen[chain_idx]
-        if len(bn) == 0:
-            last_full_bin_gen_idx = gen_idx-1
-            return last_full_bin_gen_idx
-        
-
-def merge_chain_tip(bin_generations, chain_idx):
-    chain_tip_gen_idx = find_chain_tip_idx(bin_generations, chain_idx)
-
-    for atom_idx in bin_generations[chain_tip_gen_idx][chain_idx]:
-        bin_generations[chain_tip_gen_idx-1][chain_idx] = \
-            np.append(bin_generations[chain_tip_gen_idx-1][chain_idx], np.array([atom_idx]))
-    bin_generations[chain_tip_gen_idx][chain_idx] = np.array([])
-    
-    new_tip_gen_idx = chain_tip_gen_idx - 1
-    return new_tip_gen_idx
-
-
-def check_collision(collision_list, chain_idx, chain_tip_gen_idx):
-
-    for collision in collision_list:
-        if chain_tip_gen_idx == collision[0]:
-            for col_tuple in collision[1]:
-                if chain_idx in col_tuple:
-                    return True
-
-    return False
-
-
-def trim_until_collision(bin_generations, collision_list, chain_idx):
-
-    has_collided = False
-    tip_gen_idx = find_chain_tip_idx(bin_generations, chain_idx)
-    while tip_gen_idx > 0:
-        has_collided = check_collision(collision_list, chain_idx, tip_gen_idx)
-        if has_collided == True:
+                    else:
+                        if not num_chains == 2:
+                            print("WEIRD PROBLEM: num_chains should be 2")
+                        print("\n ---- final_collision_found! ---- \n")
+                        final_collision_found = True
+                        final_chain_idxs = [chain1_idx, chain2_idx]
+                        print("final_collision: " + str(final_chain_idxs))
+                        gen_idx_of_last_collision = curr_gen_idx
+            if final_collision_found:
+                break
+        if final_collision_found:
             break
-        merge_chain_tip(bin_generations, chain_idx)
-        tip_gen_idx = find_chain_tip_idx(bin_generations, chain_idx)
 
-
-
+    return (collisions_found, final_collision_found, final_chain_idxs, gen_idx_of_last_collision)
 
 
 def merge(chains, col_gen_idx, chain1_idx, chain2_idx):
@@ -289,7 +118,7 @@ def merge(chains, col_gen_idx, chain1_idx, chain2_idx):
     for gen_idx in range(len(merged_chains)):
         # print("gen_idx " + str(gen_idx))
         merged_bin = np.concatenate(
-                (deepcopy(merged_chains[gen_idx][chain1_idx]),
+            (deepcopy(merged_chains[gen_idx][chain1_idx]),
                  deepcopy(merged_chains[gen_idx][chain2_idx])),
                  axis=0)
         merged_bin = np.unique(np.array(merged_bin))
@@ -300,45 +129,6 @@ def merge(chains, col_gen_idx, chain1_idx, chain2_idx):
         merged_chains[gen_idx][chain2_idx] = np.array([])
 
     return merged_chains
-
-
-def merge_chain(merged_bin_generations, bin_generations, collision_list, col_gen_idx, col_tuple):
-
-    # Handle cases when more than two chains collide at same time at same place
-    # col_tuple[0] always contains the smaller chain index
-    # print("col_tuple")
-    # print(col_tuple)
-    # print("merged_bin_generations[0][2]: ")
-    # print(merged_bin_generations[0][2] + merged_bin_generations[0][0])
-    
-    chain1_idx = col_tuple[0]
-    chain2_idx = col_tuple[1]
-
-    """
-    Check whether any of the two collided chains have uncollided tips.
-    If so, trim the chains down until the tip is involved in a collision
-    """
-    trim_until_collision(merged_bin_generations, collision_list, chain1_idx)
-    trim_until_collision(merged_bin_generations, collision_list, chain2_idx)
-    
-    print("In merge_chain: bin_generations: ")
-    print_generations(merged_bin_generations)
-
-    
-    for gen_idx in range(col_gen_idx+1):
-        # print("gen_idx " + str(gen_idx))
-        merged_bin = np.concatenate(
-                (deepcopy(merged_bin_generations[gen_idx][chain1_idx]),
-                 deepcopy(merged_bin_generations[gen_idx][chain2_idx])),
-                 axis=0)
-        merged_bin = [int(x) for x in merged_bin]
-        print("merged_bin: ")
-        print(merged_bin)
-        merged_bin_generations[gen_idx][chain1_idx] = merged_bin
-        merged_bin_generations[gen_idx][chain2_idx] = np.array([])
-        
-    # print("merged_bin_generations: ")
-    # print(merged_bin_generations)
 
 
 def remove_duplicates_from_tips(chains, chain1_idx, chain2_idx):
@@ -370,8 +160,6 @@ def remove_duplicates_from_all_tips(chains):
                 chains[-1][chain_idx] = np.array([x for x in bn if not x == atom_idx])
 
 
-
-
 def glue_chains(chain1, chain2, interact_mtrx):
     """
     Glue dangling ends of two chains together:
@@ -384,7 +172,7 @@ def glue_chains(chain1, chain2, interact_mtrx):
         new_chain.append(deepcopy(bn))
 
     # print("new_chain: "+ str([x+1 for x in new_chain]))
-    
+
     for ii in range(1, len(chain2)+1):
         idx = len(chain2) - ii
         bn = deepcopy(chain2[idx])
@@ -393,8 +181,9 @@ def glue_chains(chain1, chain2, interact_mtrx):
         if ii == 1:
             print("chain1[-2]: " + str([x+1 for x in chain1[-2]]))
             print("chain2[idx-1]: " + str([x+1 for x in chain2[idx-1]]))
-            
-            if bins_are_neighbours(chain1[-1], chain2[idx-1], interact_mtrx) or bins_are_neighbours(chain1[-2], chain2[idx], interact_mtrx):
+
+            if bins_are_neighbours(chain1[-1], chain2[idx-1], interact_mtrx) \
+                or bins_are_neighbours(chain1[-2], chain2[idx], interact_mtrx):
                 print("Merge ends.")
                 bn = np.append(bn, deepcopy(new_chain[-1]))
                 # print("bn after merge" + str([x+1 for x in bn]))
@@ -402,49 +191,6 @@ def glue_chains(chain1, chain2, interact_mtrx):
             else:
                 print("Don't merge ends.")
 
-
         new_chain.append(bn)
-        
+
     return new_chain
-
-
-
-def test_solution(final_chain, interact_mtrx):
-
-    # Check whether all bins have two neighbour bins
-    num_neighbours = [0]*len(final_chain)
-    # print("num_neighbours: " + str(num_neighbours))
-    for gen_idx1, gen1 in enumerate(final_chain):
-        for gen_idx2, gen2 in enumerate(final_chain):
-            if not gen_idx2 == gen_idx1:
-                if bins_are_neighbours(gen1, gen2, interact_mtrx):
-                    num_neighbours[gen_idx1] += 1
-    print("num_neighbours: " + str(num_neighbours))
-    for num_n in num_neighbours:
-        if num_n > 2:
-            print("At least one bin has more than two neighbours.")
-            print("---> BAD SOLUTION <---")
-            return False
-    
-    #Check whether the atom_idx from all_atom_idxs exist exactly once
-    #in the final_chain, and no other atom_idx are present in the final_chain.
-    all_atom_idxs = list(range(len(interact_mtrx[:,0])))
-
-    for gen in final_chain:
-        for atom_idx in gen:
-            if atom_idx in all_atom_idxs:
-                all_atom_idxs.remove(atom_idx)
-            else:
-                print("Either duplicate atom_idx, or atom_idx not part of original molecule found:")
-                print("atom_idx: " + str(atom_idx+1))
-                print("---> BAD SOLUTION <---")
-                return False
-    if not len(all_atom_idxs) == 0:
-        print("At least one atom_idx from original molecule was not sorted into final_chain:")
-        print("unsorted atom_idx: " + str([x+1 for x in all_atom_idxs]))
-        print("---> BAD SOLUTION <---")
-        return False
-
-    print("Solution check passed!")
-    return True
-

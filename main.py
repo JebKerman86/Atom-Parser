@@ -10,24 +10,35 @@ import numpy as np
 from copy import deepcopy
 
 from prep_input import prep_data
-from file_io import chache_data, load_data, write_bins, read_xyz_file, read_transport_file
-from bin_sort import get_contact_bins, get_next_bins, remove_common_elems, \
-                     find_all_collisions, merge_chain, glue_chains, bins_are_neighbours, merge, remove_duplicates_from_all_tips, remove_duplicates_from_tips, test_solution
-from utilities import remove_all, print_generations, count_atoms
 
-LOAD_CACHE_DATA = False
+from file_io import chache_data, load_data, write_bins, read_xyz_file, \
+                    read_transport_file
+
+from bin_sort import get_contact_bins, get_next_bins, bins_are_neighbours, \
+                     glue_chains, merge, remove_duplicates_from_all_tips, \
+                     remove_duplicates_from_tips
+
+from utilities import print_generations, count_atoms, \
+                      print_final_chain, test_solution
+
 # Name without file ending:
 # INPUT_FILE_NAME = "caffeine"
-# INPUT_FILE_NAME = "caffeine_no_simultaneous_collision"
+INPUT_FILE_NAME = "caffeine_no_simultaneous_collision"
 # INPUT_FILE_NAME = "1d_kette"
 # INPUT_FILE_NAME = "t-kreuzung_sackgasse"
 # INPUT_FILE_NAME = "t-kreuzung_dick"
-INPUT_FILE_NAME = "kompliziert"
+# INPUT_FILE_NAME = "kompliziert"
 # INPUT_FILE_NAME = "zno2wire"
 # INPUT_FILE_NAME = "SiNW"
+
+LOAD_CACHE_DATA = False
 OPEN_JMOL = True
 
-MAX_GENERATIONS = 30
+# Maximal number of Generations, this is a maximum value for safety, to
+# protect the program from getting stuck in an infinite loop.
+# Increase if necessary.
+MAX_GENERATIONS = 100
+
 
 def main():
 
@@ -37,45 +48,45 @@ def main():
 
     # The loaded data are NOT numpy arrays (change later?)
     (atom_types, atom_positions) = read_xyz_file(str(INPUT_FILE_NAME))
-    (region_list, interaction_distances) = read_transport_file(str(INPUT_FILE_NAME))
+    (region_list, interaction_distances) = \
+        read_transport_file(str(INPUT_FILE_NAME))
 
     if LOAD_CACHE_DATA:
         data = load_data(INPUT_FILE_NAME)
     else:
-        data = prep_data(atom_types, atom_positions, region_list, interaction_distances)
+        data = prep_data(atom_types, atom_positions, region_list,
+                         interaction_distances)
         chache_data(INPUT_FILE_NAME, data)
 
     dist_mtrx = data["dist_mtrx"]
     interact_mtrx = data["interact_mtrx"]
-    ordered_idx_mtrx = data["ordered_idx_mtrx"]
-    ordered_dist_mtrx = data["ordered_dist_mtrx"]
-    ordered_interact_mtrx = data["ordered_interact_mtrx"]
+    # ordered_idx_mtrx = data["ordered_idx_mtrx"]
+    # ordered_dist_mtrx = data["ordered_dist_mtrx"]
+    # ordered_interact_mtrx = data["ordered_interact_mtrx"]
 
     num_atoms = np.size(dist_mtrx, axis=0)
 
-    # Don't convert to np array in file_io because this complictes caching
+    # Didn't convert to np array in file_io because this complicates caching
     # (since numpy arrays non json-serialzable)
-
     np_region_list = []
     for region in region_list:
         np_region_list.append(np.array(region))
-
 
     device = np_region_list[0]
     contacts = np_region_list[1:]
     print("contacts: " + str(contacts))
     contact_bins = get_contact_bins(device, contacts, interact_mtrx)
-    num_unlisted_contact_atoms = count_atoms([contacts]) - count_atoms([contact_bins])
+    num_unlisted_contact_atoms = \
+        count_atoms([contacts]) - count_atoms([contact_bins])
     prev_bins = list.copy(contacts)
-    #print("prev_bins" + str(prev_bins))
 
-    #Each element in "bin_generations" is a list of bins. Each of these lists
-    #contains the bins of a specific generation. The bins are sorted in the
-    #order of ascending contact indices.
-    #All bins that are the same number of steps away from the contacts are
-    #assigned to the same "generation", the atoms in "contact_bins" are
-    #in generation zero.
-    #"contact_bins": All contact atoms that are interacting with the device
+    # Each element in "chains" is a list of bins. Each of these lists
+    # contains the bins of a specific generation. The bins are sorted in the
+    # order of ascending contact indices.
+    # All bins that are the same number of steps away from the contacts are
+    # assigned to the same "generation", the atoms in "contact_bins" are
+    # in generation zero.
+    # "contact_bins": All contact atoms that are interacting with the device
     # are assigned to this bin.
 
     print("contact_bins: " + str(contact_bins))
@@ -90,6 +101,7 @@ def main():
     final_chain_idxs = []
     gen_idx_of_last_collision = -1
 
+    # This condition is a failsafe, to avoid infinite loops
     while curr_gen_idx < MAX_GENERATIONS:
         collisions_found = []
         print("curr_gen_idx: " + str(curr_gen_idx))
@@ -107,10 +119,6 @@ def main():
                     if chain2_idx > chain1_idx:
                         if bins_are_neighbours(bn1, bn2, interact_mtrx):
                             if num_chains > 2:
-                                # Duplicates have to be removed AFTER collision recognition,
-                                # since otherwise this could prevent finding collisions
-                                # remove_duplicates_from_tips(chains, chain1_idx, chain2_idx)
-                                # remove_duplicates_from_tips(chains, chain1_idx, chain2_idx)
                                 collisions_found.append((chain1_idx,chain2_idx))
                                 print("collisions_found: " + str(collisions_found))
                                 num_chains -= 1
@@ -136,8 +144,10 @@ def main():
             src_chain_idx = col_tuple[0]
             target_chain_idx = col_tuple[1]
 
-            if col_tuple[0] in final_chain_idxs and col_tuple[1] in final_chain_idxs:
-                sys.exit("FATAL ERROR: Should never merge the two final chains into eachother.")
+            if col_tuple[0] in final_chain_idxs:
+                if col_tuple[1] in final_chain_idxs:
+                    sys.exit("FATAL ERROR: Should never merge the two \
+                             final chains into eachother.")
 
             # Make sure we are merging into the final chain.
             # If not, swap src_chain_idx with target_chain_idx.
@@ -153,6 +163,8 @@ def main():
             ########################################
             # CONSIDER: FOR MULTIPLE COLLISIONS, TRY TO MERGE SMALLER CHAINS TOGETHER FIRST
             ########################################
+            # Duplicates have to be removed AFTER collision recognition,
+            # since otherwise this could prevent finding collisions
             remove_duplicates_from_tips(chains, target_chain_idx, src_chain_idx)
             chains = merge(chains, curr_gen_idx, target_chain_idx, src_chain_idx)
             print("\n Chains after merge step: ")
@@ -166,6 +178,8 @@ def main():
             break
         curr_gen_idx += 1
 
+    if curr_gen_idx >= MAX_GENERATIONS:
+        sys.exit("FATAL ERROR: MAX_GENERATIONS exceeded. (Increase MAX_GENERATIONS?)")
 
     if not final_collision_found:
         sys.exit("FATAL ERROR: No final collision found, don't know which chains to keep")
@@ -190,9 +204,8 @@ def main():
             chains[gen_idx][src_chain_idx] = np.array([])
         step += 1
 
-
     remove_duplicates_from_all_tips(chains)
-    
+
     print("\n chain after removing duplicates from tips, and before glueing: ")
     print_generations(chains)
 
@@ -203,7 +216,7 @@ def main():
             final_chain1.append(add_bin)
         else:
             break
-    
+
     cntct_bin1 = deepcopy(final_chain1[0])
     for atom_idx in contacts[final_chain_idxs[0]]:
         if atom_idx not in final_chain1[0]:
@@ -226,21 +239,12 @@ def main():
 
     final_chain = glue_chains(final_chain1, final_chain2, interact_mtrx)
 
-
     print("\nfinal_chain: ")
-    
-    line_str = ""
-    for bn in final_chain:
-        line_str = line_str + str([x for x in bn])
-        line_str = line_str + "\n"
-
-    print(line_str)
+    print_final_chain(final_chain)
 
     is_solution = test_solution(final_chain, interact_mtrx)
     print("is_solution: " + str(is_solution))
     write_bins(final_chain, atom_positions, INPUT_FILE_NAME, OPEN_JMOL)
-
-
 
     """
           Algorithm: Simultaneously, from all contacts move into device.
@@ -248,10 +252,10 @@ def main():
                      contact with previous partition
                      when partitions starting from two different contacts
                      collide: Merge partitions from the two branches into one.
-                     
+
                      If more than two branches collide: Merge branches such
                      that the largest branch is as small as possible
-                     
+
                      If there is still ambigouity, use contact indices of
                      branches to establich merge order
     """

@@ -3,11 +3,12 @@
 Einlesen von .XYZ Dateien
 """
 
-import numpy as np
-import json
 import os
 from subprocess import PIPE, Popen
 from pathlib import Path
+
+import json
+import numpy as np
 
 
 CACHED_DATA_FOLDER_NAME = "cached_data"
@@ -80,7 +81,8 @@ def read_transport_file(input_file_name):
     which spcifies the maximum interaction distance between each type of atom.
     """
 
-    transport_file_path = "./" + INPUT_FOLDER_NAME + "/" + str(input_file_name) + "_" + "transport.dat"
+    transport_file_path = "./" + INPUT_FOLDER_NAME + "/" + \
+        str(input_file_name) + "_" + "transport.dat"
     file = open(transport_file_path, 'r')
     max_file_lines = 1000
 
@@ -93,7 +95,7 @@ def read_transport_file(input_file_name):
 
     line = file.readline()
     entries = line.split()
-    
+
     #A single list of device atom indices.
     device_region = []
     # A list of lists, one list of atom indices for each contact.
@@ -112,7 +114,7 @@ def read_transport_file(input_file_name):
         line = file.readline()
         entries = line.split()
         iterations += 1
-        
+
         if not("Device" in entries[0] or "Contact" in entries[0]):
             break
 
@@ -135,10 +137,10 @@ def read_transport_file(input_file_name):
         entries = line.split()
         iterations += 1
         stripped_line = line.replace(" ", "").replace("\n", "")
-        
+
         if stripped_line == '':
             break
-        
+
     # print("In read_transport_file: " + str(region_list))
 
     return (region_list, interaction_distances)
@@ -158,10 +160,11 @@ def write_bins(final_chain, atom_positions, file_name, open_jmol):
     outfile = open(file_path, 'w')
 
     outfile.write(str(num_atoms) + "\n")
-    outfile.write("This file shows the principal layers into which the molecule has been sorted." + "\n")
-    
+    outfile.write("This file shows the principal layers into which the \
+                  molecule has been sorted." + "\n")
+
     chem_elements = ["H", "O"]
-    
+
     #line_num = 3
     for gen_idx, generation in enumerate(final_chain):
         for atom_idx in generation:
@@ -191,7 +194,7 @@ def chache_data(input_file, data):
     jsonified_data = {}
     for key, array in data.items():
         converted_array = array
-        if(str(type(array)) == "<class 'numpy.ndarray'>"):
+        if str(type(array) == "<class 'numpy.ndarray'>"):
             converted_array = array.tolist()
         jsonified_data[key] = converted_array
 
@@ -225,6 +228,6 @@ def load_data(input_file_name):
                 data[key] = converted_array
 
             return data
-    
+
     print("No File Found")
     return "No File Found"
