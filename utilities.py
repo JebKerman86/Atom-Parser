@@ -27,6 +27,18 @@ def remove_all(input_list, elem_to_remove):
 
     return return_list
 
+def count_atoms(chains):
+    num_atoms = 0
+    sorted_atom_idxs = []
+    for gen in chains:
+        for bn in gen:
+            for atom_idx in bn:
+                if atom_idx not in sorted_atom_idxs:
+                    sorted_atom_idxs.append(atom_idx)
+                    num_atoms += 1
+                else:
+                    print("In count_atoms: duplicate atom found.")
+    return num_atoms
 
 def print_generations(bin_generations):
     for gen_idx, gen in enumerate(bin_generations):
@@ -35,7 +47,7 @@ def print_generations(bin_generations):
         line_str = ""
         for bn in gen:
             #print("bn: " + str(bn))
-            line_str = line_str + str([x+1 for x in bn])
+            line_str = line_str + str([x for x in bn])
             line_str = line_str + " -- "
         print(line_str)
 

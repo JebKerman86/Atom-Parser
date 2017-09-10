@@ -11,21 +11,21 @@ from copy import deepcopy
 from prep_input import prep_data
 from file_io import chache_data, load_data, write_bins, read_xyz_file, read_transport_file
 from bin_sort import get_contact_bins, get_next_bins, remove_common_elems, \
-                     find_all_collisions, merge_chain, glue_chains, bins_are_neighbours, merge, remove_duplicates_from_tips, test_solution
-from utilities import remove_all, print_generations
+                     find_all_collisions, merge_chain, glue_chains, bins_are_neighbours, merge, remove_duplicates_from_all_tips, remove_duplicates_from_tips, test_solution
+from utilities import remove_all, print_generations, count_atoms
 
 LOAD_CACHE_DATA = False
 # Name without file ending:
 # INPUT_FILE_NAME = "caffeine"
-INPUT_FILE_NAME = "caffeine_no_simultaneous_collision"
+# INPUT_FILE_NAME = "caffeine_no_simultaneous_collision"
 # INPUT_FILE_NAME = "1d_kette"
 # INPUT_FILE_NAME = "t-kreuzung_sackgasse"
 # INPUT_FILE_NAME = "t-kreuzung_dick"
-# INPUT_FILE_NAME = "zno2wire"
+INPUT_FILE_NAME = "zno2wire"
 # INPUT_FILE_NAME = "SiNW"
 OPEN_JMOL = True
 
-MAX_GENERATIONS = 100
+MAX_GENERATIONS = 30
 
 def main():
 
@@ -63,6 +63,7 @@ def main():
     contacts = np_region_list[1:]
     print("contacts: " + str(contacts))
     contact_bins = get_contact_bins(device, contacts, interact_mtrx)
+    num_unlisted_contact_atoms = count_atoms([contacts]) - count_atoms([contact_bins])
     prev_bins = list.copy(contacts)
     #print("prev_bins" + str(prev_bins))
 
@@ -89,11 +90,6 @@ def main():
     print("num_chains: " + str(num_chains))
     curr_gen_idx = 1
 
-    # contact atoms count as sorted from the beginning
-    num_sorted_atoms = 0
-    for c in contacts:
-        num_sorted_atoms += len(c)
-        
     final_collision_found = False
     final_chain_idxs = []
     gen_idx_of_last_collision = -1
@@ -104,46 +100,31 @@ def main():
 
         chains.append(curr_gen)
         prev_bins = prev_bins + curr_gen
-        
+
         print("\n Chains before merge step ")
         print_generations(chains)
 
         # PROBLEM: RIGHT NOW WE CAN ONLY HANDLE ONE COLLISION PER GENERATION
         if not final_collision_found:
-            collision_found = False
+            collisions_found = []
             for chain1_idx, bn1 in enumerate(curr_gen):
                 for chain2_idx, bn2 in enumerate(curr_gen):
                     if chain2_idx > chain1_idx:
                         if bins_are_neighbours(bn1, bn2, interact_mtrx):
                             if num_chains > 2:
+                                # Duplicates have to be removed AFTER collision recognition,
+                                # since otherwise this could prevent finding collisions
+                                # remove_duplicates_from_tips(chains, chain1_idx, chain2_idx)
+                                remove_duplicates_from_tips(chains, chain1_idx, chain2_idx)
                                 # Merge chains
                                 print("bn1: " +str([x+1 for x in bn1]))
                                 print("bn2: " +str([x+1 for x in bn2]))
                                 chains = merge(chains, curr_gen_idx, chain1_idx, chain2_idx)
                                 num_chains -= 1
-                                
-                                remove_duplicates_from_tips(chains)
-                                
-                                # CHECK IF OTHER CHAIN TIP CONTAINS ATOMS FROM MERGED CHAIN TIP
-                                # IF YES: DELETE ATOMS TO AVOID DUPLICATES
-                                """
-                                all_chain_idxs = list(range(len(curr_gen)))
-                                print("all_chain_idxs" + str(all_chain_idxs))
-                                print("chain1_idx = " + str(chain1_idx))
-                                print("chain2_idx = " + str(chain2_idx))
-                                merged_chain_idx = chain1_idx
-                                not_merged_chain_idxs = [x for x in all_chain_idxs if not x in [chain1_idx, chain2_idx]]
-                                print("merged_chain_idx: " + str(merged_chain_idx))
-                                merged_chain_tip = chains[curr_gen_idx][merged_chain_idx]
-                                print("not_merged_chain_idxs" + str(not_merged_chain_idxs))
-                                for not_merged_chain_idx in not_merged_chain_idxs:
-                                    bn = chains[curr_gen_idx][not_merged_chain_idx]
-                                    bn = np.array([x for x in bn if not x in merged_chain_tip])
-                                    chains[curr_gen_idx][not_merged_chain_idx] = bn
-                                """
+
                                 print("\n Chains after merge step: ")
                                 print_generations(chains)
-                                collision_found = True
+                                collisions_found.append((chain1_idx, chain2_idx))
                             else:
                                 if not num_chains == 2:
                                     print("WEIRD PROBLEM: num_chains should be 2")
@@ -151,16 +132,17 @@ def main():
                                 final_collision_found = True
                                 final_chain_idxs = [chain1_idx, chain2_idx]
                                 gen_idx_of_last_collision = curr_gen_idx
-                                remove_duplicates_from_tips(chains)
+                                remove_duplicates_from_all_tips(chains)
 
-                    if collision_found or final_collision_found:
+                    if len(collisions_found) is not 0 or final_collision_found:
                         break
-                if collision_found or final_collision_found:
+                if len(collisions_found) is not 0 or final_collision_found:
                     break
+                
+        print("collisions_found: " + str(collisions_found))
 
-        for bn in chains[-1]:
-            num_sorted_atoms += len(np.unique(bn))
-
+        num_sorted_atoms = count_atoms(chains) + num_unlisted_contact_atoms
+        print("num_sorted_atoms: " + str(num_sorted_atoms))
         if num_sorted_atoms >= num_atoms:
             print("num_sorted_atoms = " + str(num_sorted_atoms))
             break
@@ -172,25 +154,24 @@ def main():
     step = 0
     num_gen = len(chains)
     for gen_idx in range(gen_idx_of_last_collision+1, num_gen):
-        print("gen_idx = " + str(gen_idx))
+        # print("gen_idx = " + str(gen_idx))
 
         for idx, src_chain_idx in enumerate(final_chain_idxs):
             target_chain_idx = final_chain_idxs[(idx+1)%2]
-            print("chain_idx = " + str(src_chain_idx))
-            print("target_chain_idx = " + str(target_chain_idx))
+            # print("chain_idx = " + str(src_chain_idx))
+            # print("target_chain_idx = " + str(target_chain_idx))
             target_bin = chains[gen_idx_of_last_collision-step][target_chain_idx]
             src_bin = chains[gen_idx][src_chain_idx]
-            print("target_bin = " + str(target_bin))
-            print("src_bin = " + str(src_bin))
+            # print("target_bin = " + str(target_bin))
+            # print("src_bin = " + str(src_bin))
             target_bin = np.append(target_bin, deepcopy(src_bin))
             target_bin = np.array([int(x) for x in target_bin])
             chains[gen_idx_of_last_collision-step][target_chain_idx] = target_bin
             chains[gen_idx][src_chain_idx] = np.array([])
         step += 1
-        
 
 
-    remove_duplicates_from_tips(chains)
+    remove_duplicates_from_all_tips(chains)
     
     print("\n chain after removing duplicates from tips, and before glueing: ")
     print_generations(chains)

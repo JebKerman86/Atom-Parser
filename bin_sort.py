@@ -339,18 +339,35 @@ def merge_chain(merged_bin_generations, bin_generations, collision_list, col_gen
     # print(merged_bin_generations)
 
 
-def remove_duplicates_from_tips(chains):
+def remove_duplicates_from_tips(chains, chain1_idx, chain2_idx):
+    print("In remove_duplicates_from_tips: ")
+    # tips = deepcopy([chains[-1][chain1_idx], chains[-1][chain2_idx]])
+    existing_atoms_idxs = []
+
+    for chain_idx in [chain1_idx, chain2_idx]:
+        bn = chains[-1][chain_idx]
+        print(chain_idx)
+        print(bn)
+        for atom_idx in bn:
+            if not atom_idx in existing_atoms_idxs:
+                existing_atoms_idxs.append(atom_idx)
+            else:
+                chains[-1][chain_idx] = np.array([x for x in bn if not x == atom_idx])
+
+
+def remove_duplicates_from_all_tips(chains):
     tips = deepcopy(chains[-1])
 
     existing_atoms_idxs = []
-    
+
     for chain_idx, bn in enumerate(tips):
         for atom_idx in bn:
             if not atom_idx in existing_atoms_idxs:
                 existing_atoms_idxs.append(atom_idx)
             else:
                 chains[-1][chain_idx] = np.array([x for x in bn if not x == atom_idx])
-                # print("chains[-1][chain_idx]: " + str(chains[-1][chain_idx]))
+
+
 
 
 def glue_chains(chain1, chain2, interact_mtrx):
@@ -372,8 +389,8 @@ def glue_chains(chain1, chain2, interact_mtrx):
 
         # print("bn" + str([x+1 for x in bn]))
         if ii == 1:
-            print("chain1[-2]" + str([x+1 for x in chain1[-2]]))
-            print("chain1[-2]" + str([x+1 for x in chain2[idx-1]]))
+            print("chain1[-2]: " + str([x+1 for x in chain1[-2]]))
+            print("chain2[idx-1]: " + str([x+1 for x in chain2[idx-1]]))
             
             if bins_are_neighbours(chain1[-1], chain2[idx-1], interact_mtrx) or bins_are_neighbours(chain1[-2], chain2[idx], interact_mtrx):
                 print("Merge ends.")
