@@ -16,12 +16,12 @@ from utilities import remove_all, print_generations, count_atoms
 
 LOAD_CACHE_DATA = False
 # Name without file ending:
-# INPUT_FILE_NAME = "caffeine"
+INPUT_FILE_NAME = "caffeine"
 # INPUT_FILE_NAME = "caffeine_no_simultaneous_collision"
 # INPUT_FILE_NAME = "1d_kette"
 # INPUT_FILE_NAME = "t-kreuzung_sackgasse"
 # INPUT_FILE_NAME = "t-kreuzung_dick"
-INPUT_FILE_NAME = "zno2wire"
+# INPUT_FILE_NAME = "zno2wire"
 # INPUT_FILE_NAME = "SiNW"
 OPEN_JMOL = True
 
@@ -81,12 +81,6 @@ def main():
     chains.append(contact_bins)
     # print("bin_generations" + str(bin_generations))
     num_chains = len(contacts)
-    """
-    active_chains = []
-    for c in range(num_chains):
-        active_chains.append(True)
-    print("active_chains: " + str(active_chains))
-    """
     print("num_chains: " + str(num_chains))
     curr_gen_idx = 1
 
@@ -95,6 +89,7 @@ def main():
     gen_idx_of_last_collision = -1
 
     while curr_gen_idx < MAX_GENERATIONS:
+        collisions_found = []
         print("curr_gen_idx: " + str(curr_gen_idx))
         curr_gen = get_next_bins(chains[-1], prev_bins, interact_mtrx)
 
@@ -104,9 +99,7 @@ def main():
         print("\n Chains before merge step ")
         print_generations(chains)
 
-        # PROBLEM: RIGHT NOW WE CAN ONLY HANDLE ONE COLLISION PER GENERATION
         if not final_collision_found:
-            collisions_found = []
             for chain1_idx, bn1 in enumerate(curr_gen):
                 for chain2_idx, bn2 in enumerate(curr_gen):
                     if chain2_idx > chain1_idx:
@@ -116,30 +109,42 @@ def main():
                                 # since otherwise this could prevent finding collisions
                                 # remove_duplicates_from_tips(chains, chain1_idx, chain2_idx)
                                 remove_duplicates_from_tips(chains, chain1_idx, chain2_idx)
-                                # Merge chains
-                                print("bn1: " +str([x+1 for x in bn1]))
-                                print("bn2: " +str([x+1 for x in bn2]))
-                                chains = merge(chains, curr_gen_idx, chain1_idx, chain2_idx)
+                                collisions_found.append((chain1_idx,chain2_idx))
+                                print("collisions_found: " + str(collisions_found))
                                 num_chains -= 1
+                                print("num_chains = " + str(num_chains))
 
-                                print("\n Chains after merge step: ")
-                                print_generations(chains)
-                                collisions_found.append((chain1_idx, chain2_idx))
                             else:
                                 if not num_chains == 2:
                                     print("WEIRD PROBLEM: num_chains should be 2")
                                 print("\n ---- final_collision_found! ---- \n")
                                 final_collision_found = True
                                 final_chain_idxs = [chain1_idx, chain2_idx]
+                                print("final_collision: " + str(final_chain_idxs))
                                 gen_idx_of_last_collision = curr_gen_idx
                                 remove_duplicates_from_all_tips(chains)
 
-                    if len(collisions_found) is not 0 or final_collision_found:
+                    if final_collision_found:
                         break
-                if len(collisions_found) is not 0 or final_collision_found:
+                if final_collision_found:
                     break
-                
-        print("collisions_found: " + str(collisions_found))
+
+
+        for col_tuple in collisions_found:
+            chain1_idx = col_tuple[0]
+            chain2_idx = col_tuple[1]
+            # Merge chains
+            print("Merge chain_idxs:" + str(col_tuple))
+            print("bn1: " +str([x+1 for x in curr_gen[chain1_idx]]))
+            print("bn2: " +str([x+1 for x in curr_gen[chain2_idx]]))
+            ########################################
+            # PROBLEM: ALWAYS MERGE INTO THE CHAINS THAT IS IN final_chain_idxs !!!
+            # CONSIDER: FOR MULTIPLE COLLISIONS, TRY TO MERGE SMALLER CHAINS TOGETHER FIRST
+            ########################################
+            chains = merge(chains, curr_gen_idx, chain1_idx, chain2_idx)
+            print("\n Chains after merge step: ")
+            print_generations(chains)
+
 
         num_sorted_atoms = count_atoms(chains) + num_unlisted_contact_atoms
         print("num_sorted_atoms: " + str(num_sorted_atoms))

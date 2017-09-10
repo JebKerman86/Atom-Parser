@@ -340,14 +340,14 @@ def merge_chain(merged_bin_generations, bin_generations, collision_list, col_gen
 
 
 def remove_duplicates_from_tips(chains, chain1_idx, chain2_idx):
-    print("In remove_duplicates_from_tips: ")
+    # print("In remove_duplicates_from_tips: ")
     # tips = deepcopy([chains[-1][chain1_idx], chains[-1][chain2_idx]])
     existing_atoms_idxs = []
 
     for chain_idx in [chain1_idx, chain2_idx]:
         bn = chains[-1][chain_idx]
-        print(chain_idx)
-        print(bn)
+        # print(chain_idx)
+        # print(bn)
         for atom_idx in bn:
             if not atom_idx in existing_atoms_idxs:
                 existing_atoms_idxs.append(atom_idx)
@@ -444,19 +444,4 @@ def test_solution(final_chain, interact_mtrx):
 
     print("Solution check passed!")
     return True
-
-"""
-def find_contacts_to_keep(bin_generations):
-    
-    Find the two contacts that should be left over after merging.
-    These are the two contacts that have the most bins (principal layers)
-    between them.
-    
-    num_ctcts = len(bin_generations[0])
-    for cntct_idx1 in num_ctcts:
-        for cntc_idx2 in num_ctcts:
-            if cntc_idx2 > cntct_idx1:
-                
-"""
-
 
