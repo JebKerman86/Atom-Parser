@@ -133,7 +133,10 @@ def main():
                                 final_chain_idxs = [chain1_idx, chain2_idx]
                                 print("final_collision: " + str(final_chain_idxs))
                                 gen_idx_of_last_collision = curr_gen_idx
-                                # remove_duplicates_from_all_tips(chains)
+                                print("remove_duplicates_from_ALL_tips")
+                                remove_duplicates_from_all_tips(chains)
+                                print("\n Chains after removing duplicates:")
+                                print_generations(chains)
 
                     if final_collision_found:
                         break
@@ -166,11 +169,14 @@ def main():
             ########################################
             # Duplicates have to be removed AFTER collision recognition,
             # since otherwise this could prevent finding collisions
-            remove_duplicates_from_tips(chains, target_chain_idx, src_chain_idx)
+            print("remove_duplicates_from_ALL_tips")
+            # remove_duplicates_from_tips(chains, target_chain_idx, src_chain_idx)
+            remove_duplicates_from_all_tips(chains)
             chains = merge(chains, curr_gen_idx, target_chain_idx, src_chain_idx)
             print("\n Chains after merge step: ")
             print_generations(chains)
 
+        print("remove_duplicates_from_ALL_tips")
         remove_duplicates_from_all_tips(chains)
         num_sorted_atoms = count_atoms(chains) + num_unlisted_contact_atoms
         print("num_sorted_atoms: " + str(num_sorted_atoms))
@@ -195,28 +201,55 @@ def main():
     num_gen = len(chains)
     
     #Find dead ends in the two final chains
-    dead_end_idxs = []
+    dead_end_tuples = []
+    dead_ends = []
     dead_end_start_idx = gen_idx_of_last_collision+1
     for chain_idx in final_chain_idxs:
         length = get_chain_length(chains, chain_idx, dead_end_start_idx)
         if length == 0:
-            dead_end_idxs.append((-1,-1))
+            dead_end_tuples.append((-1,-1))
+            dead_ends.append([])
         else:
-            dead_end_idxs.append((dead_end_start_idx, dead_end_start_idx + length - 1))
-            
-    print("dead_end_idxs: " + str(dead_end_idxs))
-    
+            dead_end_tip_idx = dead_end_start_idx + length
+            dead_end_tuples.append((dead_end_start_idx, dead_end_tip_idx-1))
+            dead_end = []
+            for gen in chains[dead_end_start_idx:dead_end_tip_idx]:
+                dead_end.append(gen[chain_idx])
+            dead_ends.append(dead_end)
+
+    print("dead_end_tuples: " + str(dead_end_tuples))
+
+    print("dead_end: " + str([x+1 for x in dead_ends[1]]))
+
     # Before Merging dead ends, we have to make sure the dead end isn't longer
     # than the final chain we are attempting to merge it into
+
     chain_length_until_last_collision = gen_idx_of_last_collision+1
-    for dead_end in dead_end_idxs:
+    merged_dead_ends = []
+    for dead_end in dead_ends:
         print("dead_end: " + str(dead_end))
-        if not dead_end == (-1,-1):
-            dead_end_length = abs(dead_end[0] - dead_end[1])+1
-            if dead_end_length > chain_length_until_last_collision or True:
+        merged_dead_end = []
+        dead_end_length = len(dead_end)
+        if dead_end_length > 0:
+            while dead_end_length > chain_length_until_last_collision:
+                shortened_dead_end = []
                 # Shorten dead end to make it fit
                 print("dead_end_length: " + str(dead_end_length))
-            
+                for bn_idx, bn in enumerate(dead_end):
+                    merged_bn = []
+                    if dead_end_length%2 ==1 and bn == dead_end[-1]:
+                        merged_bn.append(dead_end[-1])
+                    if bn_idx%2 == 1:
+                        merged_bn = merged_bn + [dead_end[bn_idx-1], dead_end[bn_idx]]
+                        print("merged_bn: " + str(merged_bn))
+                        shortened_dead_end.append(merged_bn)
+                dead_end_length = len(shortened_dead_end)
+                dead_end = shortened_dead_end
+
+                    
+        merged_dead_ends.append(merged_dead_end)
+        
+    print("merged_dead_ends: " + str(merged_dead_ends))
 
     step = 0
     for gen_idx in range(gen_idx_of_last_collision+1, num_gen):

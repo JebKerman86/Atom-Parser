@@ -131,6 +131,7 @@ def merge(chains, col_gen_idx, chain1_idx, chain2_idx):
     return merged_chains
 
 
+# THIS FUNCTION IS BROKEN AT THE MOMENT
 def remove_duplicates_from_tips(chains, chain1_idx, chain2_idx):
     # print("In remove_duplicates_from_tips: ")
     # tips = deepcopy([chains[-1][chain1_idx], chains[-1][chain2_idx]])
@@ -152,12 +153,20 @@ def remove_duplicates_from_all_tips(chains):
 
     existing_atoms_idxs = []
 
-    for chain_idx, bn in enumerate(tips):
-        for atom_idx in bn:
-            if not atom_idx in existing_atoms_idxs:
+    for chain_idx in range(len(tips)):
+        for atom_idx in chains[-1][chain_idx]:
+            if atom_idx not in existing_atoms_idxs:
                 existing_atoms_idxs.append(atom_idx)
             else:
-                chains[-1][chain_idx] = np.array([x for x in bn if not x == atom_idx])
+                bn = chains[-1][chain_idx]
+                index = np.argwhere(bn==atom_idx)[0][0]
+                print("atom_idx to remove = " + str(atom_idx+1))
+                print("index to remove = " + str(index))
+                print("bn before remove: " + str([x+1 for x in bn]))
+                chains[-1][chain_idx] = np.delete(bn, index)
+                print("bn after remove: " + str([x+1 for x in chains[-1][chain_idx]]))
+
+    print("existing_atoms_idxs: " + str(existing_atoms_idxs))
 
 def get_chain_length(chains, chain_idx, start_gen_idx):
     """
