@@ -159,6 +159,23 @@ def remove_duplicates_from_all_tips(chains):
             else:
                 chains[-1][chain_idx] = np.array([x for x in bn if not x == atom_idx])
 
+def get_chain_length(chains, chain_idx, start_gen_idx):
+    """
+    Get length of the chain with index "chain_idx", starting from (and including)
+    generation "start_gen_idx" to end of chain, or until first
+    empty bin (while excluding empty bin).
+    """
+    
+    length = 0
+    for gen_idx, gen in enumerate(chains[start_gen_idx:]):
+        bn = gen[chain_idx]
+        if len(bn) == 0:
+            break
+        length += 1
+        # print("\nbn: " + str([x+1 for x in bn]))
+    
+    return length
+
 
 def glue_chains(chain1, chain2, interact_mtrx):
     """

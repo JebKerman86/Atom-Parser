@@ -16,23 +16,24 @@ from file_io import chache_data, load_data, write_bins, read_xyz_file, \
 
 from bin_sort import get_contact_bins, get_next_bins, bins_are_neighbours, \
                      glue_chains, merge, remove_duplicates_from_all_tips, \
-                     remove_duplicates_from_tips
+                     remove_duplicates_from_tips, get_chain_length
 
 from utilities import print_generations, count_atoms, \
                       print_final_chain, test_solution
 
 # Name without file ending:
 # INPUT_FILE_NAME = "caffeine"
-INPUT_FILE_NAME = "caffeine_no_simultaneous_collision"
+# INPUT_FILE_NAME = "caffeine_no_simultaneous_collision"
 # INPUT_FILE_NAME = "1d_kette"
 # INPUT_FILE_NAME = "t-kreuzung_sackgasse"
 # INPUT_FILE_NAME = "t-kreuzung_dick"
+INPUT_FILE_NAME = "t-kreuzung_langer_arm"
 # INPUT_FILE_NAME = "kompliziert"
 # INPUT_FILE_NAME = "zno2wire"
 # INPUT_FILE_NAME = "SiNW"
 
 LOAD_CACHE_DATA = False
-OPEN_JMOL = True
+OPEN_JMOL = False
 
 # Maximal number of Generations, this is a maximum value for safety, to
 # protect the program from getting stuck in an infinite loop.
@@ -174,6 +175,7 @@ def main():
         num_sorted_atoms = count_atoms(chains) + num_unlisted_contact_atoms
         print("num_sorted_atoms: " + str(num_sorted_atoms))
         if num_sorted_atoms >= num_atoms:
+            # Fehler ausgeben falls größer!!
             print("All atoms sorted.")
             break
         curr_gen_idx += 1
@@ -183,19 +185,50 @@ def main():
 
     if not final_collision_found:
         sys.exit("FATAL ERROR: No final collision found, don't know which chains to keep")
+    
     print("\n Chain before culling dead ends: ")
     print_generations(chains)
-    step = 0
+    
+    # length = get_chain_length(chains, final_chain_idxs[0], gen_idx_of_last_collision+1)
+    # print("length = " + str(length))
+    
     num_gen = len(chains)
+    
+    #Find dead ends in the two final chains
+    dead_end_idxs = []
+    dead_end_start_idx = gen_idx_of_last_collision+1
+    for chain_idx in final_chain_idxs:
+        length = get_chain_length(chains, chain_idx, dead_end_start_idx)
+        if length == 0:
+            dead_end_idxs.append((-1,-1))
+        else:
+            dead_end_idxs.append((dead_end_start_idx, dead_end_start_idx + length - 1))
+            
+    print("dead_end_idxs: " + str(dead_end_idxs))
+    
+    # Before Merging dead ends, we have to make sure the dead end isn't longer
+    # than the final chain we are attempting to merge it into
+    chain_length_until_last_collision = gen_idx_of_last_collision+1
+    for dead_end in dead_end_idxs:
+        print("dead_end: " + str(dead_end))
+        if not dead_end == (-1,-1):
+            dead_end_length = abs(dead_end[0] - dead_end[1])+1
+            if dead_end_length > chain_length_until_last_collision or True:
+                # Shorten dead end to make it fit
+                print("dead_end_length: " + str(dead_end_length))
+            
+
+    step = 0
     for gen_idx in range(gen_idx_of_last_collision+1, num_gen):
         # print("gen_idx = " + str(gen_idx))
 
         for idx, src_chain_idx in enumerate(final_chain_idxs):
+            # This should always yield the other index
             target_chain_idx = final_chain_idxs[(idx+1)%2]
             # print("chain_idx = " + str(src_chain_idx))
             # print("target_chain_idx = " + str(target_chain_idx))
-            target_bin = chains[gen_idx_of_last_collision-step][target_chain_idx]
             src_bin = chains[gen_idx][src_chain_idx]
+            target_bin = chains[gen_idx_of_last_collision-step][target_chain_idx]
             # print("target_bin = " + str(target_bin))
             # print("src_bin = " + str(src_bin))
             target_bin = np.append(target_bin, deepcopy(src_bin))
@@ -221,6 +254,7 @@ def main():
     for atom_idx in contacts[final_chain_idxs[0]]:
         if atom_idx not in final_chain1[0]:
             cntct_bin1 = np.append(cntct_bin1, atom_idx)
+    # brauche ich hier deepcopy???????
     final_chain1[0] = deepcopy(cntct_bin1)
 
     final_chain2 = []
