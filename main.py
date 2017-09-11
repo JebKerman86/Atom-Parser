@@ -23,11 +23,11 @@ from utilities import print_generations, count_atoms, \
 
 # Name without file ending:
 # INPUT_FILE_NAME = "caffeine"
-# INPUT_FILE_NAME = "caffeine_no_simultaneous_collision"
+INPUT_FILE_NAME = "caffeine_no_simultaneous_collision"
 # INPUT_FILE_NAME = "1d_kette"
 # INPUT_FILE_NAME = "t-kreuzung_sackgasse"
 # INPUT_FILE_NAME = "t-kreuzung_dick"
-INPUT_FILE_NAME = "t-kreuzung_langer_arm"
+# INPUT_FILE_NAME = "t-kreuzung_langer_arm"
 # INPUT_FILE_NAME = "kompliziert"
 # INPUT_FILE_NAME = "zno2wire"
 # INPUT_FILE_NAME = "SiNW"
@@ -101,6 +101,7 @@ def main():
     final_collision_found = False
     final_chain_idxs = []
     gen_idx_of_last_collision = -1
+    gen_idx_of_last_generation = -1
 
     # This condition is a failsafe, to avoid infinite loops
     while curr_gen_idx < MAX_GENERATIONS:
@@ -133,6 +134,7 @@ def main():
                                 final_chain_idxs = [chain1_idx, chain2_idx]
                                 print("final_collision: " + str(final_chain_idxs))
                                 gen_idx_of_last_collision = curr_gen_idx
+                                print("gen_idx_of_last_collision = " + str(gen_idx_of_last_collision))
                                 print("remove_duplicates_from_ALL_tips")
                                 remove_duplicates_from_all_tips(chains)
                                 print("\n Chains after removing duplicates:")
@@ -183,6 +185,7 @@ def main():
         if num_sorted_atoms >= num_atoms:
             # Fehler ausgeben falls größer!!
             print("All atoms sorted.")
+            gen_idx_of_last_generation = curr_gen_idx
             break
         curr_gen_idx += 1
 
@@ -205,7 +208,10 @@ def main():
     dead_ends = []
     dead_end_start_idx = gen_idx_of_last_collision+1
     for chain_idx in final_chain_idxs:
+        print("chain_idx = " + str(chain_idx))
+        print("dead_end_start_idx = " + str(dead_end_start_idx))
         length = get_chain_length(chains, chain_idx, dead_end_start_idx)
+        print("length = " + str(length))
         if length == 0:
             dead_end_tuples.append((-1,-1))
             dead_ends.append([])
@@ -213,43 +219,78 @@ def main():
             dead_end_tip_idx = dead_end_start_idx + length
             dead_end_tuples.append((dead_end_start_idx, dead_end_tip_idx-1))
             dead_end = []
-            for gen in chains[dead_end_start_idx:dead_end_tip_idx]:
+            for gen in chains[dead_end_start_idx:]:
+                print("gen: " + str([x+1 for x in gen]))
                 dead_end.append(gen[chain_idx])
-            dead_ends.append(dead_end)
+            dead_ends.append(deepcopy(dead_end))
 
     print("dead_end_tuples: " + str(dead_end_tuples))
 
-    print("dead_end: " + str([x+1 for x in dead_ends[1]]))
+    for dead_end in dead_ends:
+        print("dead_end: " + str([x+1 for x in dead_end]))
 
     # Before Merging dead ends, we have to make sure the dead end isn't longer
     # than the final chain we are attempting to merge it into
 
     chain_length_until_last_collision = gen_idx_of_last_collision+1
-    merged_dead_ends = []
+    shortened_dead_ends = []
+    print("Shorten dead ends:")
     for dead_end in dead_ends:
-        print("dead_end: " + str(dead_end))
-        merged_dead_end = []
+        print("dead_end: " + str([x+1 for x in dead_end]))
+        shortened_dead_end = dead_end
         dead_end_length = len(dead_end)
         if dead_end_length > 0:
-            while dead_end_length > chain_length_until_last_collision:
+            print("dead_end_length > 0")
+            # subtract "1", because otherwise we would merge into the contact
+            while dead_end_length > chain_length_until_last_collision-1:
+                print("chain_length_until_last_collision = " + str(chain_length_until_last_collision))
                 shortened_dead_end = []
                 # Shorten dead end to make it fit
                 print("dead_end_length: " + str(dead_end_length))
                 for bn_idx, bn in enumerate(dead_end):
-                    merged_bn = []
-                    if dead_end_length%2 ==1 and bn == dead_end[-1]:
-                        merged_bn.append(dead_end[-1])
+                    merged_bn = np.array([])
+                    if dead_end_length%2 == 1 and bn == dead_end[-1]:
+                        print("dead_end_length%2 == 1 and bn == dead_end[-1]")
+                        merged_bn = np.append(merged_bn, dead_end[-1])
+                        merged_bn = [int(x) for x in merged_bn]
+                        shortened_dead_end.append(deepcopy(merged_bn))
                     if bn_idx%2 == 1:
-                        merged_bn = merged_bn + [dead_end[bn_idx-1], dead_end[bn_idx]]
+                        print("bn_idx%2 == 1")
+                        merged_bn = np.append(merged_bn, np.array([dead_end[bn_idx-1], dead_end[bn_idx]]))
+                        merged_bn = [int(x) for x in merged_bn]
                         print("merged_bn: " + str(merged_bn))
-                        shortened_dead_end.append(merged_bn)
+                        shortened_dead_end.append(deepcopy(merged_bn))
                 dead_end_length = len(shortened_dead_end)
                 dead_end = shortened_dead_end
+                print("dead_end_length: " + str(dead_end_length))
 
-                    
-        merged_dead_ends.append(merged_dead_end)
+        shortened_dead_ends.append(shortened_dead_end)
         
-    print("merged_dead_ends: " + str(merged_dead_ends))
+
+
+    print("\nMerge dead ends: \n")
+    for idx, dead_end in enumerate(shortened_dead_ends):
+        chain_idx = final_chain_idxs[idx]
+        print("chain_idx: " + str(chain_idx))
+        print("dead_end: " + str(dead_end))
+        other_chain_idx = final_chain_idxs[(chain_idx+1)%2]
+        print("other_chain_idx: " + str(other_chain_idx))
+        dead_end_length = num_gen - chain_length_until_last_collision
+        print("dead_end_length = " + str(dead_end_length))
+        print("deleting end of chain: " + str(chain_idx))
+        for gen_idx in range(dead_end_length):
+            print("delete bin of generation index: " + str(chain_length_until_last_collision+gen_idx))
+            chains[chain_length_until_last_collision+gen_idx][chain_idx] = np.array([])
+
+        for gen_idx, bn in enumerate(dead_end):
+            print("bn: " + str(bn))
+            print("chains[gen_idx_of_last_collision-gen_idx][other_chain_idx]: " + str([x+1 for x in chains[gen_idx_of_last_collision-gen_idx][other_chain_idx]]))
+            merged_bn = np.append(chains[gen_idx_of_last_collision-gen_idx][other_chain_idx],bn)
+            chains[gen_idx_of_last_collision-gen_idx][other_chain_idx] = merged_bn
+            print("chains[gen_idx_of_last_collision-gen_idx][other_chain_idx]: " + str([x+1 for x in chains[gen_idx_of_last_collision-gen_idx][other_chain_idx]]))
+
+
+    """
 
     step = 0
     for gen_idx in range(gen_idx_of_last_collision+1, num_gen):
@@ -269,6 +310,8 @@ def main():
             chains[gen_idx_of_last_collision-step][target_chain_idx] = target_bin
             chains[gen_idx][src_chain_idx] = np.array([])
         step += 1
+        
+    """
 
     remove_duplicates_from_all_tips(chains)
 
