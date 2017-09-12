@@ -58,42 +58,6 @@ def merge(chains, col_gen_idx, chain1_idx, chain2_idx):
     return merged_chains
 
 
-def glue_chains(chain1, chain2, interact_mtrx):
-    """
-    Glue dangling ends of two chains together:
-    [0 --> chain1  -->  -1]  +  [-1  -->  chain2  -->  0]
-    """
-    # print("In glue_chains: \n")
-    new_chain = []
-
-    for gen_idx, bn in enumerate(chain1):
-        new_chain.append(deepcopy(bn))
-
-    # print("new_chain: "+ str([x+1 for x in new_chain]))
-
-    for ii in range(1, len(chain2)+1):
-        idx = len(chain2) - ii
-        bn = deepcopy(chain2[idx])
-
-        # print("bn" + str([x+1 for x in bn]))
-        if ii == 1:
-            print("chain1[-2]: " + str([x+1 for x in chain1[-2]]))
-            print("chain2[idx-1]: " + str([x+1 for x in chain2[idx-1]]))
-
-            if bins_are_neighbours(chain1[-1], chain2[idx-1], interact_mtrx) \
-                or bins_are_neighbours(chain1[-2], chain2[idx], interact_mtrx):
-                print("Merge ends.")
-                bn = np.append(bn, deepcopy(new_chain[-1]))
-                # print("bn after merge" + str([x+1 for x in bn]))
-                new_chain = new_chain[0:-1]
-            else:
-                print("Don't merge ends.")
-
-        new_chain.append(bn)
-
-    return new_chain
-
-
 def shorten_dead_ends(dead_ends, chain_length_until_last_collision):
     shortened_dead_ends = []
 
@@ -130,3 +94,105 @@ def shorten_dead_ends(dead_ends, chain_length_until_last_collision):
         shortened_dead_ends.append(shortened_dead_end)
         
     return shortened_dead_ends
+
+
+def merge_dead_ends_into_final_chains(chains, shortened_dead_ends, final_chain_idxs, gen_idx_of_last_collision):
+    
+    num_gen = len(chains)
+    chain_length_until_last_collision = gen_idx_of_last_collision+1
+    print("\nMerge dead ends: \n")
+    for idx, dead_end in enumerate(shortened_dead_ends):
+        chain_idx = final_chain_idxs[idx]
+        print("chain_idx: " + str(chain_idx))
+        print("dead_end: " + str(dead_end))
+        other_chain_idx = final_chain_idxs[(chain_idx+1)%2]
+        print("other_chain_idx: " + str(other_chain_idx))
+        dead_end_length = num_gen - chain_length_until_last_collision
+        print("dead_end_length = " + str(dead_end_length))
+        print("deleting end of chain: " + str(chain_idx))
+        for gen_idx in range(dead_end_length):
+            print("delete bin of generation index: " + str(chain_length_until_last_collision+gen_idx))
+            chains[chain_length_until_last_collision+gen_idx][chain_idx] = np.array([])
+
+        for gen_idx, bn in enumerate(dead_end):
+            print("bn: " + str(bn))
+            print("chains[gen_idx_of_last_collision-gen_idx][other_chain_idx]: " + str([x+1 for x in chains[gen_idx_of_last_collision-gen_idx][other_chain_idx]]))
+            merged_bn = np.append(chains[gen_idx_of_last_collision-gen_idx][other_chain_idx],bn)
+            chains[gen_idx_of_last_collision-gen_idx][other_chain_idx] = merged_bn
+            print("chains[gen_idx_of_last_collision-gen_idx][other_chain_idx]: " + str([x+1 for x in chains[gen_idx_of_last_collision-gen_idx][other_chain_idx]]))
+
+
+
+def glue_chains(chain1, chain2, interact_mtrx):
+    """
+    Glue dangling ends of two chains together:
+    [0 --> chain1  -->  -1]  +  [-1  -->  chain2  -->  0]
+    """
+    # print("In glue_chains: \n")
+    new_chain = []
+
+    for gen_idx, bn in enumerate(chain1):
+        new_chain.append(deepcopy(bn))
+
+    # print("new_chain: "+ str([x+1 for x in new_chain]))
+
+    for ii in range(1, len(chain2)+1):
+        idx = len(chain2) - ii
+        bn = deepcopy(chain2[idx])
+
+        # print("bn" + str([x+1 for x in bn]))
+        if ii == 1:
+            print("chain1[-2]: " + str([x+1 for x in chain1[-2]]))
+            print("chain2[idx-1]: " + str([x+1 for x in chain2[idx-1]]))
+
+            if bins_are_neighbours(chain1[-1], chain2[idx-1], interact_mtrx) \
+                or bins_are_neighbours(chain1[-2], chain2[idx], interact_mtrx):
+                print("Merge ends.")
+                bn = np.append(bn, deepcopy(new_chain[-1]))
+                # print("bn after merge" + str([x+1 for x in bn]))
+                new_chain = new_chain[0:-1]
+            else:
+                print("Don't merge ends.")
+
+        new_chain.append(bn)
+
+    return new_chain
+
+
+
+
+def build_final_chain(chains, contacts, final_chain_idxs, interact_mtrx):
+    
+    final_chain1 = []
+    for gen in chains:
+        add_bin = gen[final_chain_idxs[0]]
+        if not len(add_bin) == 0:
+            final_chain1.append(add_bin)
+        else:
+            break
+
+    cntct_bin1 = deepcopy(final_chain1[0])
+    for atom_idx in contacts[final_chain_idxs[0]]:
+        if atom_idx not in final_chain1[0]:
+            cntct_bin1 = np.append(cntct_bin1, atom_idx)
+    # brauche ich hier deepcopy???????
+    final_chain1[0] = deepcopy(cntct_bin1)
+
+    final_chain2 = []
+    for gen in chains:
+        add_bin = gen[final_chain_idxs[1]]
+        if not len(add_bin) == 0:
+            final_chain2.append(add_bin)
+        else:
+            break
+
+    cntct_bin2 = deepcopy(final_chain2[0])
+    for atom_idx in contacts[final_chain_idxs[1]]:
+        if atom_idx not in final_chain2[0]:
+            cntct_bin2 = np.append(cntct_bin2, atom_idx)
+    final_chain2[0] = deepcopy(cntct_bin2)
+
+    final_chain = glue_chains(final_chain1, final_chain2, interact_mtrx)
+    
+    return final_chain
+    
