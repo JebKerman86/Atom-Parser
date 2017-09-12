@@ -58,7 +58,7 @@ def read_xyz_file(input_file_name):
         line = file.readline()
         stripped_line = line.replace(" ", "").replace("\n", "")
 
-    print("Length of Atom List: " + str(len(atom_positions)))
+    # print("Length of Atom List: " + str(len(atom_positions)))
 
     if iterations >= max_file_lines:
         print("Input file too long!")

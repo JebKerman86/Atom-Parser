@@ -21,14 +21,16 @@ from chain_edit import remove_duplicates_from_all_tips, merge, shorten_dead_ends
                        merge_dead_ends_into_final_chains, build_final_chain
 
 from utilities import print_generations, count_atoms, \
-                      print_final_chain, test_solution
+                      print_final_chain, test_solution, print_var
 
 # Name without file ending:
 ALL_TEST_FILE_NAMES = ["1d_kette", "zno2wire", "t-kreuzung_dick", "t-kreuzung_langer_arm", "t-kreuzung_sackgasse", "caffeine_no_simultaneous_collision", "caffeine", "kompliziert"]
 TEST_FILE_NAMES = ALL_TEST_FILE_NAMES[0:]
 
 LOAD_CACHE_DATA = False
-DISPLAY_FILE_NAME = TEST_FILE_NAMES[0:0]
+GLOBAL_VERBOSITY_FLAG = False
+
+DISPLAY_FILE_NAME = TEST_FILE_NAMES[3]
 
 # Maximal number of Generations, this is a maximum value for safety, to
 # protect the program from getting stuck in an infinite loop.
@@ -37,6 +39,7 @@ MAX_GENERATIONS = 100
 
 
 def main():
+    vrb_main = GLOBAL_VERBOSITY_FLAG
 
     """
     Entry Point for Program
@@ -69,13 +72,18 @@ def main():
     
         # Didn't convert to np array in file_io because this complicates caching
         # (since numpy arrays non json-serialzable)
-        np_region_list = []
+        numpy_region_list = []
         for region in region_list:
-            np_region_list.append(np.array(region))
+            numpy_region_list.append(np.array(region))
     
-        device = np_region_list[0]
-        contacts = np_region_list[1:]
-        print("contacts: " + str(contacts))
+        device = numpy_region_list[0]
+        contacts = numpy_region_list[1:]
+        
+
+        print_var(device, vrb = vrb_main)
+        print_var(contacts, vrb = vrb_main)
+
+        
         contact_bins = get_contact_bins(device, contacts, interact_mtrx)
         num_unlisted_contact_atoms = \
             count_atoms([contacts]) - count_atoms([contact_bins])
@@ -90,12 +98,10 @@ def main():
         # "contact_bins": All contact atoms that are interacting with the device
         # are assigned to this bin.
 
-        print("contact_bins: " + str(contact_bins))
         chains = []
         chains.append(contact_bins)
         # print("bin_generations" + str(bin_generations))
         num_chains = len(contacts)
-        print("num_chains: " + str(num_chains))
         curr_gen_idx = 1
 
         final_collision_found = False
@@ -105,14 +111,15 @@ def main():
         # This condition is a failsafe, to avoid infinite loops
         while curr_gen_idx < MAX_GENERATIONS:
             collisions_found = []
-            print("curr_gen_idx: " + str(curr_gen_idx))
+            if vrb_main: print(curr_gen_idx)
             curr_gen = get_next_bins(chains[-1], prev_bins, interact_mtrx)
 
             chains.append(curr_gen)
             prev_bins = prev_bins + curr_gen
 
-            print("\n Chains before merge step ")
-            print_generations(chains)
+            if vrb_main:
+                print("\n Chains before merge step ")
+                print_generations(chains)
 
             if not final_collision_found:
                 for chain1_idx, bn1 in enumerate(curr_gen):
@@ -121,24 +128,24 @@ def main():
                             if bins_are_neighbours(bn1, bn2, interact_mtrx):
                                 if num_chains > 2:
                                     collisions_found.append((chain1_idx,chain2_idx))
-                                    print("collisions_found: " + str(collisions_found))
                                     num_chains -= 1
-                                    print("num_chains = " + str(num_chains))
+                                    if vrb_main:
+                                        print("collisions_found: " + str(collisions_found))
+                                        print("num_chains = " + str(num_chains))
 
                                 else:
                                     if num_chains < 2:
                                         sys.exit("FATAL ERROR: num_chains < 2")
 
-                                    print("\n ---- final_collision_found! ---- \n")
                                     final_collision_found = True
                                     final_chain_idxs = [chain1_idx, chain2_idx]
-                                    print("final_collision: " + str(final_chain_idxs))
                                     gen_idx_of_last_collision = curr_gen_idx
-                                    print("gen_idx_of_last_collision = " + str(gen_idx_of_last_collision))
-                                    print("remove_duplicates_from_ALL_tips")
                                     remove_duplicates_from_all_tips(chains)
-                                    print("\n Chains after removing duplicates:")
-                                    print_generations(chains)
+                                    
+                                    if vrb_main:
+                                        print("\n ---- final_collision_found! ---- \n")
+                                        print("gen_idx_of_last_collision = " + str(gen_idx_of_last_collision))
+                                        print("final_chain_idxs: " + str(final_chain_idxs))
     
                         if final_collision_found:
                             break
@@ -162,29 +169,30 @@ def main():
                     target_chain_idx = col_tuple[0]
     
                 # Merge chains
-                print("Merge chain_idxs:" + str(col_tuple))
-                print("src_chain bin: " +str([x+1 for x in curr_gen[src_chain_idx]]))
-                print("target_chain bin: " +str([x+1 for x in curr_gen[target_chain_idx]]))
+                if vrb_main:
+                    print("Merge chain_idxs:" + str(col_tuple))
+                    print("src_chain bin: " +str([x+1 for x in curr_gen[src_chain_idx]]))
+                    print("target_chain bin: " +str([x+1 for x in curr_gen[target_chain_idx]]))
     
                 ########################################
                 # CONSIDER: FOR MULTIPLE COLLISIONS, TRY TO MERGE SMALLER CHAINS TOGETHER FIRST
                 ########################################
                 # Duplicates have to be removed AFTER collision recognition,
                 # since otherwise this could prevent finding collisions
-                print("remove_duplicates_from_ALL_tips")
                 remove_duplicates_from_all_tips(chains)
                 chains = merge(chains, curr_gen_idx, target_chain_idx, src_chain_idx)
-                print("\n Chains after merge step: ")
-                print_generations(chains)
-    
-            print("remove_duplicates_from_ALL_tips")
+                
+                if vrb_main:
+                    print("\n Chains after merge step: ")
+                    print_generations(chains)
+
             remove_duplicates_from_all_tips(chains)
             num_sorted_atoms = count_atoms(chains) + num_unlisted_contact_atoms
-            print("num_sorted_atoms: " + str(num_sorted_atoms))
+
             if num_sorted_atoms >= num_atoms:
                 if num_sorted_atoms > num_atoms:
                     sys.exit("FATAL ERROR: num_sorted_atoms > num_atoms")
-                print("All atoms sorted.")
+                if vrb_main: print("All atoms sorted.")
                 break
             curr_gen_idx += 1
     
@@ -194,38 +202,38 @@ def main():
         if not final_collision_found:
             sys.exit("FATAL ERROR: No final collision found, don't know which chains to keep")
         
-        print("\n Chain before culling dead ends: ")
-        print_generations(chains)
+        if vrb_main:
+            print("\n Chain before culling dead ends: ")
+            print_generations(chains)
         
         #Find dead ends in the two final chains
         dead_ends = get_dead_ends(chains, final_chain_idxs, gen_idx_of_last_collision)
-    
-        # for dead_end in dead_ends:
-        #     print("dead_end: " + str([x+1 for x in dead_end]))
-    
+
         # Before Merging dead ends, we have to make sure the dead end isn't longer
         # than the final chain we are attempting to merge it into
         chain_length_until_last_collision = gen_idx_of_last_collision+1
         shortened_dead_ends = shorten_dead_ends(dead_ends, chain_length_until_last_collision)
 
         merge_dead_ends_into_final_chains(chains, shortened_dead_ends, final_chain_idxs, gen_idx_of_last_collision)
-
         remove_duplicates_from_all_tips(chains)
 
-        print("\n chain after removing duplicates from tips, and before glueing: ")
-        print_generations(chains)
+        if vrb_main:
+            print("\n chain after removing duplicates from tips, and before glueing: ")
+            print_generations(chains)
 
         final_chain = build_final_chain(chains, contacts, final_chain_idxs, interact_mtrx)
         
         final_chains_list.append(final_chain)
 
-        print("\nfinal_chain: ")
-        print_final_chain(final_chain)
+        if vrb_main:
+            print("\nfinal_chain: ")
+            print_final_chain(final_chain)
     
         is_solution = test_solution(final_chain, interact_mtrx)
-
-        
         is_solution_list.append(is_solution)
+
+
+#------------------------------------------------------------------------------
 
 
     print("- INPUT_FILE_NAME ---------------- solution found:")
@@ -245,6 +253,9 @@ def main():
 
     for idx, INPUT_FILE_NAME in enumerate(TEST_FILE_NAMES):
         write_bins(final_chains_list[idx], atom_positions_list[idx], INPUT_FILE_NAME, OPEN_JMOL[idx])
+
+
+
     
     """
           Algorithm: Simultaneously, from all contacts move into device.
@@ -259,6 +270,11 @@ def main():
                      If there is still ambigouity, use contact indices of
                      branches to establich merge order
     """
+
+
+
+
+
 
 
 if __name__ == "__main__":

@@ -4,7 +4,7 @@ Created on Mon Aug 14 15:11:13 2017
 
 @author: Benjamin
 """
-
+import sys
 import numpy as np
 from copy import deepcopy
 
@@ -60,11 +60,11 @@ def bins_are_neighbours(bin1, bin2, interact_mtrx):
     max_atom_idx = len(interact_mtrx[:, 0])-1
     for atom_idx1 in bin1:
         if atom_idx1 > max_atom_idx:
-            print("In bins_are_neighbours: atom_idx out of range!")
+            sys.exit("FATAL ERROR: atom_idx out of range!")
             continue
         for atom_idx2 in bin2:
             if atom_idx2 > max_atom_idx:
-                print("In bins_are_neighbours: atom_idx out of range!")
+                sys.exit("FATAL ERROR: atom_idx out of range!")
                 continue
             if interact_mtrx[atom_idx1, atom_idx2]:
                 return True
@@ -90,20 +90,21 @@ def get_chain_length(chains, chain_idx, start_gen_idx):
 
 
 def get_dead_ends(chains, final_chain_idxs, gen_idx_of_last_collision):
+    vrb_local = False
     dead_ends = []
 
     dead_end_start_idx = gen_idx_of_last_collision+1
     for chain_idx in final_chain_idxs:
-        print("chain_idx = " + str(chain_idx))
-        print("dead_end_start_idx = " + str(dead_end_start_idx))
+        if vrb_local: print("chain_idx = " + str(chain_idx))
+        if vrb_local: print("dead_end_start_idx = " + str(dead_end_start_idx))
         length = get_chain_length(chains, chain_idx, dead_end_start_idx)
-        print("length = " + str(length))
+        if vrb_local: print("length = " + str(length))
         if length == 0:
             dead_ends.append([])
         else:
             dead_end = []
             for gen in chains[dead_end_start_idx:]:
-                print("gen: " + str([x+1 for x in gen]))
+                if vrb_local: print("gen: " + str([x+1 for x in gen]))
                 dead_end.append(gen[chain_idx])
             dead_ends.append(deepcopy(dead_end))
 

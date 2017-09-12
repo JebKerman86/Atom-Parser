@@ -6,29 +6,94 @@ Created on Mon Aug  7 14:32:04 2017
 """
 
 from bin_sort import bins_are_neighbours
+import numpy as np
 
 # -----------------------------------------------------------------------------
 
 
+GLOBAL_VERBOSITY_FLAG = True
+
+
 def print_generations(bin_generations):
-    for gen_idx, gen in enumerate(bin_generations):
-        # print("gen_idx: " + str(gen_idx))
-        # print(gen)
-        line_str = ""
-        for bn in gen:
-            # print("bn: " + str(bn))
-            line_str = line_str + str([x+1 for x in bn])
-            line_str = line_str + " -- "
-        print(line_str)
+    if GLOBAL_VERBOSITY_FLAG:
+        for gen_idx, gen in enumerate(bin_generations):
+            # print("gen_idx: " + str(gen_idx))
+            # print(gen)
+            line_str = ""
+            for bn in gen:
+                # print("bn: " + str(bn))
+                line_str = line_str + str([x+1 for x in bn])
+                line_str = line_str + " -- "
+            print(line_str)
 
 
 def print_final_chain(final_chain):
-    line_str = ""
-    for bn in final_chain:
-        line_str = line_str + str([x+1 for x in bn])
-        line_str = line_str + "\n"
+    if GLOBAL_VERBOSITY_FLAG:
+        line_str = ""
+        for bn in final_chain:
+            line_str = line_str + str([x+1 for x in bn])
+            line_str = line_str + "\n"
+    
+        print(line_str)
 
-    print(line_str)
+
+def print_var(var, var_name = "UNKNOWN_VARIABLE_NAME", vrb = True):
+    
+    if GLOBAL_VERBOSITY_FLAG:
+        if vrb:
+
+            if var_name is "UNKNOWN_VARIABLE_NAME":
+                import inspect
+                frame = inspect.currentframe()
+                try:
+                    caller_locals = frame.f_back.f_locals
+                    caller_globals = frame.f_back.f_globals
+                finally:
+                    del frame
+                
+                caller_namespace = caller_locals
+                caller_namespace.update(caller_globals)
+         
+                for name in caller_namespace.keys():
+                    if var is caller_namespace[name]:
+                        var_name = name
+
+
+            len_name = len(var_name)
+            var_type = type(var)
+
+            if var_type in [int, float, str]:
+                print("%-*s =  %s" % (len_name+1,var_name,str(var)))
+                return
+
+            if var_type is list:
+                print("\n" + str(var_name) + ": ")
+                for idx, elem in enumerate(var):
+                    idx_str = "[" + str(idx) + "]"
+                    print("%-*s  %s" % (5,idx_str,str(elem)))
+                return
+                    
+            if var_type is dict:
+                print("\n" + str(var_name) + ": ")
+                max_key_len=1
+                for key in var.keys():
+                    if len(key) > max_key_len:
+                        max_key_len = len(key)
+                for key in var.keys():
+                    print("%-*s  %s" % (max_key_len+1,key,var[key]))
+                return
+            
+            if var_type is np.ndarray:
+                print("\n" + str(var_name) + ": ")
+                for idx, elem in enumerate(var):
+                    idx_str = "[" + str(idx) + "]"
+                    print("%-*s  %s" % (5,idx_str,str(elem)))
+                return
+            
+            #Default print:
+            print("%-*s =  %s" % (len_name+1,var_name,str(var)))
+            
+
 
 
 def count_atoms(chains):
@@ -55,7 +120,7 @@ def test_solution(final_chain, interact_mtrx):
             if not gen_idx2 == gen_idx1:
                 if bins_are_neighbours(gen1, gen2, interact_mtrx):
                     num_neighbours[gen_idx1] += 1
-    print("num_neighbours: " + str(num_neighbours))
+    # print("num_neighbours: " + str(num_neighbours))
     for num_n in num_neighbours:
         if num_n > 2:
             print("At least one bin has more than two neighbours.")
@@ -83,5 +148,5 @@ def test_solution(final_chain, interact_mtrx):
         print("---> BAD SOLUTION <---")
         return False
 
-    print("Solution check passed!")
+    # print("Solution check passed!")
     return True
