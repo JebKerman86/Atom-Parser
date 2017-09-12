@@ -15,7 +15,7 @@ from file_io import chache_data, load_data, write_bins, read_xyz_file, \
                     read_transport_file
 
 from bin_sort import get_contact_bins, get_next_bins, bins_are_neighbours, \
-                     get_chain_length
+                     get_chain_length, get_dead_ends
                      
 from chain_edit import remove_duplicates_from_all_tips, merge, glue_chains
 
@@ -211,7 +211,9 @@ def main():
         num_gen = len(chains)
         
         #Find dead ends in the two final chains
-        # dead_end_tuples = []
+        dead_ends = get_dead_ends(chains, final_chain_idxs, gen_idx_of_last_collision)
+        
+        """
         dead_ends = []
         dead_end_start_idx = gen_idx_of_last_collision+1
         for chain_idx in final_chain_idxs:
@@ -230,8 +232,7 @@ def main():
                     print("gen: " + str([x+1 for x in gen]))
                     dead_end.append(gen[chain_idx])
                 dead_ends.append(deepcopy(dead_end))
-    
-        # print("dead_end_tuples: " + str(dead_end_tuples))
+        """
     
         for dead_end in dead_ends:
             print("dead_end: " + str([x+1 for x in dead_end]))
