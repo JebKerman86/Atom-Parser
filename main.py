@@ -16,7 +16,7 @@ from file_io import chache_data, load_data, write_bins, read_xyz_file, \
 
 from bin_sort import get_contact_bins, get_next_bins, bins_are_neighbours, \
                      glue_chains, merge, remove_duplicates_from_all_tips, \
-                     remove_duplicates_from_tips, get_chain_length
+                     get_chain_length
 
 from utilities import print_generations, count_atoms, \
                       print_final_chain, test_solution
@@ -188,7 +188,8 @@ def main():
             num_sorted_atoms = count_atoms(chains) + num_unlisted_contact_atoms
             print("num_sorted_atoms: " + str(num_sorted_atoms))
             if num_sorted_atoms >= num_atoms:
-                # Fehler ausgeben falls größer!!
+                if num_sorted_atoms > num_atoms:
+                    sys.exit("FATAL ERROR: num_sorted_atoms > num_atoms")
                 print("All atoms sorted.")
                 gen_idx_of_last_generation = curr_gen_idx
                 break

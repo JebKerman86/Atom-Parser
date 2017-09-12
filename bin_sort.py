@@ -71,40 +71,6 @@ def bins_are_neighbours(bin1, bin2, interact_mtrx):
     return False
 
 
-"""
-Tried to export this part of the program from main, but something didn't work
-"""
-def check_gen_for_collisions(curr_gen, curr_gen_idx, interact_mtrx, num_chains):
-    collisions_found = []
-    final_chain_idxs = []
-    final_collision_found = False
-    gen_idx_of_last_collision = -1
-    for chain1_idx, bn1 in enumerate(curr_gen):
-        for chain2_idx, bn2 in enumerate(curr_gen):
-            if chain2_idx > chain1_idx:
-                if bins_are_neighbours(bn1, bn2, interact_mtrx):
-                    if num_chains > 2:
-                        collisions_found.append((chain1_idx, chain2_idx))
-                        print("collisions_found: " + str(collisions_found))
-                        num_chains -= 1
-                        print("num_chains = " + str(num_chains))
-
-                    else:
-                        if not num_chains == 2:
-                            print("WEIRD PROBLEM: num_chains should be 2")
-                        print("\n ---- final_collision_found! ---- \n")
-                        final_collision_found = True
-                        final_chain_idxs = [chain1_idx, chain2_idx]
-                        print("final_collision: " + str(final_chain_idxs))
-                        gen_idx_of_last_collision = curr_gen_idx
-            if final_collision_found:
-                break
-        if final_collision_found:
-            break
-
-    return (collisions_found, final_collision_found, final_chain_idxs, gen_idx_of_last_collision)
-
-
 def merge(chains, col_gen_idx, chain1_idx, chain2_idx):
     """
     Merge chain2 into chain1, starting at col_gen_idx
@@ -129,23 +95,6 @@ def merge(chains, col_gen_idx, chain1_idx, chain2_idx):
         merged_chains[gen_idx][chain2_idx] = np.array([])
 
     return merged_chains
-
-
-# THIS FUNCTION IS BROKEN AT THE MOMENT
-def remove_duplicates_from_tips(chains, chain1_idx, chain2_idx):
-    # print("In remove_duplicates_from_tips: ")
-    # tips = deepcopy([chains[-1][chain1_idx], chains[-1][chain2_idx]])
-    existing_atoms_idxs = []
-
-    for chain_idx in [chain1_idx, chain2_idx]:
-        bn = chains[-1][chain_idx]
-        # print(chain_idx)
-        # print(bn)
-        for atom_idx in bn:
-            if not atom_idx in existing_atoms_idxs:
-                existing_atoms_idxs.append(atom_idx)
-            else:
-                chains[-1][chain_idx] = np.array([x for x in bn if not x == atom_idx])
 
 
 def remove_duplicates_from_all_tips(chains):
