@@ -30,7 +30,7 @@ TEST_FILE_NAMES = ALL_TEST_FILE_NAMES[0:]
 LOAD_CACHE_DATA = False
 GLOBAL_VERBOSITY_FLAG = False
 
-DISPLAY_FILE_NAME = TEST_FILE_NAMES[3]
+DISPLAY_FILE_NAME = TEST_FILE_NAMES[0:0]
 
 # Maximal number of Generations, this is a maximum value for safety, to
 # protect the program from getting stuck in an infinite loop.

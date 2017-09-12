@@ -9,16 +9,20 @@ import numpy as np
 from copy import deepcopy
 
 def get_contact_bins(device, contacts, interact_mtrx):
-
+    """
+    Returns the nested list "contact_starter_atom_list".
+    For each contact, this nested list contains another list of all the
+    atoms in said contact that are interacting with device atoms.
+    """
     contact_starter_atom_list = []
 
     for contact in contacts:
         contact_edge_list = []
-        for index_contact in contact:
-            for index_device in device:
-                if interact_mtrx[index_contact, index_device]:
-                    if not index_contact in contact_edge_list:
-                        contact_edge_list.append(index_contact)
+        for contact_idx in contact:
+            for device_idx in device:
+                if interact_mtrx[contact_idx, device_idx]:
+                    if not contact_idx in contact_edge_list:
+                        contact_edge_list.append(contact_idx)
         contact_starter_atom_list.append(np.array(contact_edge_list))
 
     return contact_starter_atom_list
