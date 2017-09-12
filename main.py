@@ -17,7 +17,8 @@ from file_io import chache_data, load_data, write_bins, read_xyz_file, \
 from bin_sort import get_contact_bins, get_next_bins, bins_are_neighbours, \
                      get_chain_length, get_dead_ends
                      
-from chain_edit import remove_duplicates_from_all_tips, merge, glue_chains
+from chain_edit import remove_duplicates_from_all_tips, merge, glue_chains, \
+                       shorten_dead_ends
 
 from utilities import print_generations, count_atoms, \
                       print_final_chain, test_solution
@@ -212,27 +213,6 @@ def main():
         
         #Find dead ends in the two final chains
         dead_ends = get_dead_ends(chains, final_chain_idxs, gen_idx_of_last_collision)
-        
-        """
-        dead_ends = []
-        dead_end_start_idx = gen_idx_of_last_collision+1
-        for chain_idx in final_chain_idxs:
-            print("chain_idx = " + str(chain_idx))
-            print("dead_end_start_idx = " + str(dead_end_start_idx))
-            length = get_chain_length(chains, chain_idx, dead_end_start_idx)
-            print("length = " + str(length))
-            if length == 0:
-                # dead_end_tuples.append((-1,-1))
-                dead_ends.append([])
-            else:
-                # dead_end_tip_idx = dead_end_start_idx + length
-                # dead_end_tuples.append((dead_end_start_idx, dead_end_tip_idx-1))
-                dead_end = []
-                for gen in chains[dead_end_start_idx:]:
-                    print("gen: " + str([x+1 for x in gen]))
-                    dead_end.append(gen[chain_idx])
-                dead_ends.append(deepcopy(dead_end))
-        """
     
         for dead_end in dead_ends:
             print("dead_end: " + str([x+1 for x in dead_end]))
@@ -241,40 +221,8 @@ def main():
         # than the final chain we are attempting to merge it into
     
         chain_length_until_last_collision = gen_idx_of_last_collision+1
-        shortened_dead_ends = []
-        print("Shorten dead ends:")
-        for dead_end in dead_ends:
-            print("dead_end: " + str([x+1 for x in dead_end]))
-            shortened_dead_end = dead_end
-            dead_end_length = len(dead_end)
-            if dead_end_length > 0:
-                print("dead_end_length > 0")
-                # subtract "1", because otherwise we would merge into the contact
-                while dead_end_length > chain_length_until_last_collision-1:
-                    print("chain_length_until_last_collision = " + str(chain_length_until_last_collision))
-                    shortened_dead_end = []
-                    # Shorten dead end to make it fit
-                    print("dead_end_length: " + str(dead_end_length))
-                    for bn_idx, bn in enumerate(dead_end):
-                        merged_bn = np.array([])
-                        if dead_end_length%2 == 1 and bn == dead_end[-1]:
-                            print("dead_end_length%2 == 1 and bn == dead_end[-1]")
-                            merged_bn = np.append(merged_bn, dead_end[-1])
-                            merged_bn = [int(x) for x in merged_bn]
-                            shortened_dead_end.append(deepcopy(merged_bn))
-                        if bn_idx%2 == 1:
-                            print("bn_idx%2 == 1")
-                            merged_bn = np.append(merged_bn, np.array([dead_end[bn_idx-1], dead_end[bn_idx]]))
-                            merged_bn = [int(x) for x in merged_bn]
-                            print("merged_bn: " + str(merged_bn))
-                            shortened_dead_end.append(deepcopy(merged_bn))
-                    dead_end_length = len(shortened_dead_end)
-                    dead_end = shortened_dead_end
-                    print("dead_end_length: " + str(dead_end_length))
-    
-            shortened_dead_ends.append(shortened_dead_end)
-            
-    
+        
+        shortened_dead_ends = shorten_dead_ends(dead_ends, chain_length_until_last_collision)
     
         print("\nMerge dead ends: \n")
         for idx, dead_end in enumerate(shortened_dead_ends):

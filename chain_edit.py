@@ -92,3 +92,41 @@ def glue_chains(chain1, chain2, interact_mtrx):
         new_chain.append(bn)
 
     return new_chain
+
+
+def shorten_dead_ends(dead_ends, chain_length_until_last_collision):
+    shortened_dead_ends = []
+
+    print("Shorten dead ends:")
+    for dead_end in dead_ends:
+        print("dead_end: " + str([x+1 for x in dead_end]))
+        shortened_dead_end = dead_end
+        dead_end_length = len(dead_end)
+        if dead_end_length > 0:
+            print("dead_end_length > 0")
+            # subtract "1", because otherwise we would merge into the contact
+            while dead_end_length > chain_length_until_last_collision-1:
+                print("chain_length_until_last_collision = " + str(chain_length_until_last_collision))
+                shortened_dead_end = []
+                # Shorten dead end to make it fit
+                print("dead_end_length: " + str(dead_end_length))
+                for bn_idx, bn in enumerate(dead_end):
+                    merged_bn = np.array([])
+                    if dead_end_length%2 == 1 and bn == dead_end[-1]:
+                        print("dead_end_length%2 == 1 and bn == dead_end[-1]")
+                        merged_bn = np.append(merged_bn, dead_end[-1])
+                        merged_bn = [int(x) for x in merged_bn]
+                        shortened_dead_end.append(deepcopy(merged_bn))
+                    if bn_idx%2 == 1:
+                        print("bn_idx%2 == 1")
+                        merged_bn = np.append(merged_bn, np.array([dead_end[bn_idx-1], dead_end[bn_idx]]))
+                        merged_bn = [int(x) for x in merged_bn]
+                        print("merged_bn: " + str(merged_bn))
+                        shortened_dead_end.append(deepcopy(merged_bn))
+                dead_end_length = len(shortened_dead_end)
+                dead_end = shortened_dead_end
+                print("dead_end_length: " + str(dead_end_length))
+
+        shortened_dead_ends.append(shortened_dead_end)
+        
+    return shortened_dead_ends
