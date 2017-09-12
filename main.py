@@ -210,7 +210,7 @@ def main():
         num_gen = len(chains)
         
         #Find dead ends in the two final chains
-        dead_end_tuples = []
+        # dead_end_tuples = []
         dead_ends = []
         dead_end_start_idx = gen_idx_of_last_collision+1
         for chain_idx in final_chain_idxs:
@@ -219,18 +219,18 @@ def main():
             length = get_chain_length(chains, chain_idx, dead_end_start_idx)
             print("length = " + str(length))
             if length == 0:
-                dead_end_tuples.append((-1,-1))
+                # dead_end_tuples.append((-1,-1))
                 dead_ends.append([])
             else:
-                dead_end_tip_idx = dead_end_start_idx + length
-                dead_end_tuples.append((dead_end_start_idx, dead_end_tip_idx-1))
+                # dead_end_tip_idx = dead_end_start_idx + length
+                # dead_end_tuples.append((dead_end_start_idx, dead_end_tip_idx-1))
                 dead_end = []
                 for gen in chains[dead_end_start_idx:]:
                     print("gen: " + str([x+1 for x in gen]))
                     dead_end.append(gen[chain_idx])
                 dead_ends.append(deepcopy(dead_end))
     
-        print("dead_end_tuples: " + str(dead_end_tuples))
+        # print("dead_end_tuples: " + str(dead_end_tuples))
     
         for dead_end in dead_ends:
             print("dead_end: " + str([x+1 for x in dead_end]))
