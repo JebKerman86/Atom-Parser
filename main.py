@@ -15,10 +15,9 @@ from file_io import chache_data, load_data, write_bins, read_xyz_file, \
                     read_transport_file
 
 from bin_sort import get_contact_bins, get_next_bins, bins_are_neighbours, \
-                     glue_chains, remove_duplicates_from_all_tips, \
                      get_chain_length
                      
-from chain_edit import merge
+from chain_edit import remove_duplicates_from_all_tips, merge, glue_chains
 
 from utilities import print_generations, count_atoms, \
                       print_final_chain, test_solution
