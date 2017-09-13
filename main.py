@@ -25,11 +25,15 @@ from utilities import print_generations, count_atoms, \
 
 # Name without file ending:
 ALL_TEST_FILE_NAMES = ["1d_kette", "zno2wire", "t-kreuzung", "t-kreuzung_dick", "t-kreuzung_langer_arm", "t-kreuzung_sackgasse", "ring", "caffeine_no_simultaneous_collision", "caffeine", "kompliziert"]
+
+# These test cases will be evaluated
 TEST_FILE_NAMES = ALL_TEST_FILE_NAMES[0:]
 
+# If true, dist_mtrx and interact_mtrx will be loaded from previously chached results
 LOAD_CACHE_DATA = False
 GLOBAL_VERBOSITY_FLAG = False
 
+# This file will be displayed in Jmol
 DISPLAY_FILE_NAME = TEST_FILE_NAMES[2]
 
 # Maximal number of Generations, this is a maximum value for safety, to
