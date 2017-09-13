@@ -60,16 +60,13 @@ def main():
             data = prep_data(atom_types, atom_positions, region_list,
                              interaction_distances)
             chache_data(INPUT_FILE_NAME, data)
-    
+
         atom_positions_list.append(atom_positions)
         dist_mtrx = data["dist_mtrx"]
         interact_mtrx = data["interact_mtrx"]
-        # ordered_idx_mtrx = data["ordered_idx_mtrx"]
-        # ordered_dist_mtrx = data["ordered_dist_mtrx"]
-        # ordered_interact_mtrx = data["ordered_interact_mtrx"]
-    
+
         num_atoms = np.size(dist_mtrx, axis=0)
-    
+
         # Didn't convert to np array in file_io because this complicates caching
         # (since numpy arrays non json-serialzable)
         numpy_region_list = []

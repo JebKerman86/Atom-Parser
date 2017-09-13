@@ -38,6 +38,9 @@ def prep_data(atom_types, atom_positions, region_list, interaction_distances):
     <*> dist_mtrx          ------- Distance between atom n and atom m
     <*> interact_mtrx      ------- Entry n,m is "True", if atoms n,m are
                                     within interaction distance
+
+    THE FOLLOWING MATRICES ARE NOT CALCULATED IN THE CURRENT VERSION
+    BECAUSE THEY ARE NOT CURRENTLY USED:
     <*> ordered_idx_mtrx   ------- Each line corresponds to a fixed atom. The
                                     The elements of the line are the indices
                                     of the fixed atoms neighbours, in order
@@ -68,31 +71,12 @@ def prep_data(atom_types, atom_positions, region_list, interaction_distances):
                     idx1, idx2, atom_types, interaction_distances, dist_mtrx)
             interact_mtrx[idx1, idx2] = is_interacting
 
-    # ordered_index_matrix:
-    # Each row gives a list of atoms by their index, order by increasing
-    # distance the column index for each row corresponds to the one atom
-    # relative to which all the distances in a row are measured
 
+    # Used to Calcuate these matrices, but didn't actually need them
     ordered_idx_mtrx = np.zeros((num_atoms, num_atoms))
     ordered_dist_mtrx = np.zeros((num_atoms, num_atoms))
     ordered_interact_mtrx = np.zeros((num_atoms, num_atoms))
 
-    ordered_idx_mtrx = np.argsort(dist_mtrx, axis=1)
-    ordered_dist_mtrx = np.sort(dist_mtrx, axis=1)
-
-    for idx1 in range(0, num_atoms):
-        # print("---------------------------------------------------------")
-        # print(ordered_idx_mtrx[idx1,:])
-        # print("---------------------------------------------------------")
-        for idx2, elem in enumerate(ordered_idx_mtrx[idx1, :]):
-            # print("ixd1 = " + str(idx1) + " / " + "idx2 = " + str(idx2))
-            is_interacting =  \
-                is_within_interaction_distance(
-                    idx1, elem, atom_types,
-                    interaction_distances, dist_mtrx)
-            ordered_interact_mtrx[idx1, idx2] = is_interacting
-            # print(is_interacting)
-            # print(ordered_interact_mtrx)
 
     data =  {"dist_mtrx": dist_mtrx,
              "interact_mtrx": interact_mtrx,
