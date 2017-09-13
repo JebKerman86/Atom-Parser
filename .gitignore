@@ -3,10 +3,12 @@
 # For spyder:
 /.spyproject/*
 
-#Input and output files:
-/input_files/*
+#output files:
 /output_files/*
 /cached_data/*
+
+#ignore link
+/input_files/Jmol
 
 # Pylint:
 pylintrc

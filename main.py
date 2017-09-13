@@ -24,13 +24,13 @@ from utilities import print_generations, count_atoms, \
                       print_final_chain, test_solution, print_var
 
 # Name without file ending:
-ALL_TEST_FILE_NAMES = ["1d_kette", "zno2wire", "t-kreuzung_dick", "t-kreuzung_langer_arm", "t-kreuzung_sackgasse", "caffeine_no_simultaneous_collision", "caffeine", "kompliziert"]
+ALL_TEST_FILE_NAMES = ["1d_kette", "zno2wire", "t-kreuzung", "t-kreuzung_dick", "t-kreuzung_langer_arm", "t-kreuzung_sackgasse", "ring", "caffeine_no_simultaneous_collision", "caffeine", "kompliziert"]
 TEST_FILE_NAMES = ALL_TEST_FILE_NAMES[0:]
 
 LOAD_CACHE_DATA = False
 GLOBAL_VERBOSITY_FLAG = False
 
-DISPLAY_FILE_NAME = TEST_FILE_NAMES[0:0]
+DISPLAY_FILE_NAME = TEST_FILE_NAMES[2]
 
 # Maximal number of Generations, this is a maximum value for safety, to
 # protect the program from getting stuck in an infinite loop.
@@ -44,6 +44,7 @@ def main():
     """
     Entry Point for Program
     """
+    all_tests_successful = True
     is_solution_list = []
     final_chains_list = []
     atom_positions_list = []
@@ -75,7 +76,6 @@ def main():
     
         device = numpy_region_list[0]
         contacts = numpy_region_list[1:]
-        
 
         print_var(device, vrb = vrb_main)
         print_var(contacts, vrb = vrb_main)
@@ -177,7 +177,7 @@ def main():
                 # Duplicates have to be removed AFTER collision recognition,
                 # since otherwise this could prevent finding collisions
                 remove_duplicates_from_all_tips(chains)
-                chains = merge(chains, curr_gen_idx, target_chain_idx, src_chain_idx)
+                (chains, contacts) = merge(chains, contacts, curr_gen_idx, target_chain_idx, src_chain_idx)
                 
                 if vrb_main:
                     print("\n Chains after merge step: ")
@@ -227,6 +227,8 @@ def main():
             print_final_chain(final_chain)
     
         is_solution = test_solution(final_chain, interact_mtrx)
+        if not is_solution:
+            all_tests_successful = False
         is_solution_list.append(is_solution)
 
 
@@ -237,6 +239,11 @@ def main():
     for idx, INPUT_FILE_NAME in enumerate(TEST_FILE_NAMES):
         # print(INPUT_FILE_NAME + ": " + str(is_solution_list[idx]))
         print("%-*s  success: %s" % (35,INPUT_FILE_NAME,str(is_solution_list[idx])))
+    
+    if all_tests_successful:
+        print("\n --> All test cases completed SUCCESSFULY. <--\n")
+    if not all_tests_successful:
+        print("\n --> BAD SOLUTION in test cases! <--\n")
 
 
     OPEN_JMOL = []

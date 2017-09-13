@@ -32,7 +32,7 @@ def remove_duplicates_from_all_tips(chains):
     # print("existing_atoms_idxs: " + str(existing_atoms_idxs))
 
 
-def merge(chains, col_gen_idx, chain1_idx, chain2_idx):
+def merge(chains, contacts, col_gen_idx, chain1_idx, chain2_idx):
     """
     Merge chain2 into chain1, starting at col_gen_idx
     """
@@ -40,22 +40,29 @@ def merge(chains, col_gen_idx, chain1_idx, chain2_idx):
     for gen in chains:
         merged_chains.append(deepcopy(gen))
 
-    # merged_chains.append(col_gen)
-
     for gen_idx in range(len(merged_chains)):
-        # print("gen_idx " + str(gen_idx))
+
         merged_bin = np.concatenate(
             (deepcopy(merged_chains[gen_idx][chain1_idx]),
                  deepcopy(merged_chains[gen_idx][chain2_idx])),
                  axis=0)
         merged_bin = np.unique(np.array(merged_bin))
-        # merged_bin = [int(x) for x in merged_bin]
-        # print("merged_bin: ")
-        # print([x+1 for x in merged_bin])
         merged_chains[gen_idx][chain1_idx] = merged_bin
         merged_chains[gen_idx][chain2_idx] = np.array([])
 
-    return merged_chains
+    # We also need to merge contacts, because the contact atoms that are not
+    # interacting with the device (which are not added to the chain)
+    # must be added into the final_chain at the end
+    merged_contact = np.concatenate(
+        (deepcopy(contacts[chain1_idx]),
+             deepcopy(contacts[chain2_idx])),
+             axis=0)
+    merged_contact = np.unique(np.array(merged_contact))
+    merged_contacts = deepcopy(contacts)
+    merged_contacts[chain1_idx] = merged_contact
+    merged_contacts[chain2_idx] = np.array([])
+
+    return (merged_chains, merged_contacts)
 
 
 def shorten_dead_ends(dead_ends, chain_length_until_last_collision):
@@ -163,7 +170,7 @@ def glue_chains(chain1, chain2, interact_mtrx):
 
 
 def build_final_chain(chains, contacts, final_chain_idxs, interact_mtrx):
-    
+
     final_chain1 = []
     for gen in chains:
         add_bin = gen[final_chain_idxs[0]]
@@ -173,6 +180,7 @@ def build_final_chain(chains, contacts, final_chain_idxs, interact_mtrx):
             break
 
     cntct_bin1 = deepcopy(final_chain1[0])
+
     for atom_idx in contacts[final_chain_idxs[0]]:
         if atom_idx not in final_chain1[0]:
             cntct_bin1 = np.append(cntct_bin1, atom_idx)
@@ -188,6 +196,7 @@ def build_final_chain(chains, contacts, final_chain_idxs, interact_mtrx):
             break
 
     cntct_bin2 = deepcopy(final_chain2[0])
+
     for atom_idx in contacts[final_chain_idxs[1]]:
         if atom_idx not in final_chain2[0]:
             cntct_bin2 = np.append(cntct_bin2, atom_idx)
