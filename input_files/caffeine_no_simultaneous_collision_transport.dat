@@ -1,0 +1,14 @@
+Device		1 15
+Device      25 25
+Contact1	16 18
+Contact2	19 21
+Contact3    22 24
+Zn Zn		2.2
+Zn C		2.2
+C  C	    2.2
+S  S        2.2
+S  C        2.2
+P  P        2.2
+P  S        2.2
+P  Zn       2.2
+P  C        2.2
