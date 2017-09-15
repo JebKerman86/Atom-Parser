@@ -79,3 +79,9 @@ docs/_build/
 target/
 
 find_subchains\.py
+
+documentation/Bilder/
+
+documentation/Documentation\.synctex\.gz
+
+documentation/Documentation\.pdf
