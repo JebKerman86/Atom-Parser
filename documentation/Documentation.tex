@@ -1,0 +1,100 @@
+
+\documentclass[11pt,a4paper]{article}
+\usepackage[a4paper,vmargin={15mm,20mm},hmargin={20mm,10mm}]{geometry}
+
+
+%\usepackage{amsmath}     % for align and intertext
+\usepackage{graphicx}
+%\usepackage{epic}        % for dottedline
+%\usepackage{color}
+
+%AUSKOMMENTIERT, DA ENGLISCHER BERICHT
+%\usepackage[ngerman]{babel}
+
+
+
+\begin{document}
+
+
+
+\renewcommand{\thefootnote}{\fnsymbol{footnote}}
+%
+\newcommand {\D} {\frac {d}        {d z}     } % \d exists for an accent
+\newcommand {\DD}{\frac {d^{2}}    {d z^{2}} }
+%
+%\newcommand{\dr}  { \frac{ \partial}{\partial r}   }
+%
+\newcommand {\dt} {\frac {\partial }{\partial t } }
+\newcommand {\dx} {\frac {\partial }{\partial x } }
+\newcommand {\dy} {\frac {\partial }{\partial y } }
+\newcommand {\dz} {\frac {\partial }{\partial z } }
+%
+\newcommand {\h} {\widehat   }                 % \H exists for an accent
+\newcommand {\T} {\widetilde }                 % \t exists for an accent
+%
+
+\renewcommand{\abstractname}{Overview}
+
+%\thispagestyle{empty}
+%\enlargethispage{250mm}
+
+
+\title{Atom-Parser documentation}
+\author{Benjamin Schrauf}
+\date{\today}
+
+\maketitle
+
+\begin{abstract}
+This python script prepares the input data for the DFTB+ electron transport density functional theory code. The program takes a molecule, given in the form of atom positions, as input. Also provided are the maximum distances at which the atoms interact, and the contact atoms through which electric current is introduced to the molecule. Using this information, the program divides the atoms into groups ("bins"). Each bin's atoms may only be in contact with atoms from at most two other bins. To satisfy this contraint, the program must generate an equivalent one dimensional structure by merging together the appropriate bins and contacts, until only two contacts are left.
+\end{abstract}
+
+
+
+\newpage
+
+%\setcounter{page}{1}
+
+\section{Program description}
+
+The DFTB+ code uses tridiagonal Hamiltonian matrices to solve molecular electron transport problems. To generate a tridiagnal Hamiltonian matrix, the atoms need to be sorted into groups ("bins") in such a way that the atoms from one bin only interact with atoms from at most two other bins.
+
+
+\subsection{Algorithm}
+
+The program assigns as index to each atom, and associates this indes with a position by a list. The program creates a list of atom indices for the atoms in each contact, as well as a list of atoms indices for the device atoms.
+
+\subsubsection{Data preparation}
+First the program generates two $n \times n$ -matrices, where $n$ is the number of atoms in the input molecule. The first matrix (dist\_mtrx) gives the distances between each atom in the molecule, the second matrix (interact\_mtrx) is composed of truth values that indicate whether two atoms are within interaction distance.
+
+\subsubsection{Sorting atoms into bins}
+
+The atoms are sorted into bins starting from from all contacts simultaneously. First, the script creates lists ("contact\_bins") containing the atoms in each contact that are interacting with device atoms. These lists are then combined into a nested list, called "generation zero". Next, a nested list containing lists of all device atoms interacting with each contact\_bin is generated. This nested list, called "generation one", is then appended to to the the nested list of generation zero. Each sucessive generation of bins is generated analogously, and appended to the previous generation. The data structure thus creates is called the "chain". The creation precess is depicted in figure \ref{fig:chains_two_contacts}.
+
+
+\begin{figure}[h!]1
+   \centering
+   \includegraphics[height=12cm, width = 16.5cm]{Bilder/chains_two_contacts.png}
+   \caption{Generating the chain data structure. Left side: Molecule with colored dots representing atoms. Center: Sorted chains a and b, consisting of bins. Right side: Data structure "final\_chain". }
+   \label{fig:chains_two_contacts}
+\end{figure}
+
+
+\subsubsection{Merging bins}
+
+
+
+
+
+%\section{References}
+%\begin{thebibliography}{20}
+%\bibitem{Rueckmann:2015}  R"uckmann, Gl"uge, Windzio:
+ %                    {\em Hinweise zum Praktikum und zur Auswertung
+ %                    von Messergebnissen.}
+ %                     Bremen, November 2015.
+
+
+%\end{thebibliography}
+
+
+\end{document}
